@@ -1,10 +1,8 @@
 {
-  "name": "hll-rcon",
+  "name": "hll.js",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "private": true
+  "main": "./src/index.js",
+  "repository": "https://github.com/hllplanner/hll.js",
+  "author": "Finbar <finbar@finbar.xyz>",
+  "license": "MIT"
 }
