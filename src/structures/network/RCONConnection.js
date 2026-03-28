@@ -3,6 +3,8 @@ const { EventEmitter } = require("node:events");
 const ResponseMessage = require("./ResponseMessage");
 const RequestMessage = require("./RequestMessage");
 
+let totalRx = 0;
+
 /**
  * Represents a single RCON server connection.
  * @extends EventEmitter
@@ -16,14 +18,9 @@ class RCONConnection extends EventEmitter {
   // Auto-increment for every sent message to assign a unique ID for each request.
   transmitMessageIndex = 0;
 
-  // These values are for the packet the server is actively responding with, if any
-  currentMessageIndex = null;
-  currentMessageContentLength = null;
-  currentMessageHeaderBuffer = null;
-  currentMessageContentBuffer = null;
+  // Continuous buffer to hold incoming TCP data until full messages are formed
+  receiveBuffer = Buffer.alloc(0);
 
-  // Array of messages waiting to be sent
-  messageQueue = [];
   // Key-value of active messages waiting for response
   requestCache = {};
 
@@ -40,8 +37,6 @@ class RCONConnection extends EventEmitter {
     this.host = client.host;
     this.port = client.port;
     this.password = client.password;
-
-    // Initialize socket listeners
 
     // Handle socket closure
     this.socket.on("close", (error) => {
@@ -101,66 +96,64 @@ class RCONConnection extends EventEmitter {
   }
 
   /**
+   * Appends incoming data to the receive buffer and triggers processing
+   *
    * @param {Buffer} data
-   * @returns {Promise<void>}
+   * @returns {void}
    */
   #handlePacket(data) {
-    // Initialize content buffer, content can only be determined once the existence (or nonexistence) of a header is determined.
-    let contentBuffer;
+    totalRx += data.length;
 
-    // Check if there is currently a message being received, if not, start a new one.
-    if (!this.currentMessageHeaderBuffer) {
-      const header = this.currentMessageHeaderBuffer = data.subarray(0, 12);
+    // Append the new data to the continuous receive buffer
+    this.receiveBuffer = Buffer.concat([this.receiveBuffer, data]);
 
-      const id = header.readUInt32LE(4);
-      const contentLength = header.readUInt32LE(8);
-
-      this.currentMessageIndex = id;
-      this.currentMessageContentLength = contentLength;
-      this.currentMessageContentBuffer = Buffer.alloc(0); // Initialize empty buffer
-
-      // Actual content is all data after the header
-      contentBuffer = data.subarray(12);
-    } else {
-      // The entire packet is the content for every subsequent packet of a response split into multiple packets
-      contentBuffer = data;
-    }
-
-    // Append the new data to the current data buffer
-    this.currentMessageContentBuffer = Buffer.concat([this.currentMessageContentBuffer, contentBuffer]);
-
-    // Check if the receive buffer is full, if it is, process the buffer
-    if (this.currentMessageContentBuffer.length === this.currentMessageContentLength) {
-      this.#processBuffer();
-    }
-  }
-
-  // Processes the buffer once all content for a message has been received
-  #processBuffer() {
-    // Get cached request
-    const cachedRequest = this.requestCache[this.currentMessageIndex];
-    const rawBuffer = Buffer.concat([this.currentMessageHeaderBuffer, this.currentMessageContentBuffer]);
-
-    const { resolve } = cachedRequest;
-
-    // Reset all buffer related states for the next message
-    this.currentMessageHeaderBuffer = null;
-    this.currentMessageContentBuffer = null;
-    this.currentMessageContentLength = null;
-    this.currentMessageIndex = null;
-
-    // Generate ResponseMessage
-    const responseMessage = new ResponseMessage(rawBuffer, cachedRequest);
-
-    // Call internal message handler
-    this.#handleMessageInternal(responseMessage);
-
-    // Resolve cached request with the ResponseMessage
-    resolve(responseMessage);
+    // Attempt to process messages from the buffer
+    this.#processBuffer();
   }
 
   /**
-   * // Internal message parser, for receiving ServerConnect and other internal library functions
+   * Processes the buffer, extracting messages as soon as their full content length is received
+   */
+  #processBuffer() {
+    // Loop to handle cases where multiple messages arrive in a single packet
+    // The header is 12 bytes long. We need at least 12 bytes to read the content length.
+    while (this.receiveBuffer.length >= 12) {
+
+      const id = this.receiveBuffer.readUInt32LE(4);
+      const contentLength = this.receiveBuffer.readUInt32LE(8);
+      const totalMessageLength = 12 + contentLength;
+
+      // Check if the buffer contains the entire message
+      // If not, break the loop and wait for the next packet
+      if (this.receiveBuffer.length < totalMessageLength) {
+        break;
+      }
+
+      // Extract the exact bytes for this single message
+      const rawBuffer = this.receiveBuffer.subarray(0, totalMessageLength);
+
+      // Advance the receive buffer to remove the processed message
+      this.receiveBuffer = this.receiveBuffer.subarray(totalMessageLength);
+
+      // Get cached request
+      const cachedRequest = this.requestCache[id];
+
+      // Generate ResponseMessage
+      const responseMessage = new ResponseMessage(rawBuffer, cachedRequest);
+
+      // Call internal message handler
+      this.#handleMessageInternal(responseMessage);
+
+      // Resolve cached request and cleanup
+      if (cachedRequest) {
+        cachedRequest.resolve(responseMessage);
+        delete this.requestCache[id];
+      }
+    }
+  }
+
+  /**
+   * Internal message parser, for receiving ServerConnect and other internal library functions
    *
    * @param {ResponseMessage} responseMessage
    */
@@ -192,6 +185,8 @@ class RCONConnection extends EventEmitter {
         }
 
         this.authToken = contentBody;
+
+        this.client.emit("ready");
 
         break;
       }

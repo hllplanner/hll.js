@@ -19,8 +19,6 @@ class RequestMessage {
     this.RCONConnection = connection;
     this.name = options.name;
     this.contentBody = options.contentBody || "";
-
-    // Increment transmit ID and assign it ot this request.
     this.id = this.RCONConnection.transmitMessageIndex = this.RCONConnection.transmitMessageIndex + 1;
   }
 
