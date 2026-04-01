@@ -3,35 +3,62 @@ const { EventEmitter } = require("node:events");
 const ResponseMessage = require("./ResponseMessage");
 const RequestMessage = require("./RequestMessage");
 
-let totalRx = 0;
+/**
+ * @typedef {Object} RequestCacheItem
+ * @property {Function} resolve - The promise resolve function.
+ * @property {RequestMessage} requestMessage - The instantiated request message.
+ * @property {boolean} encrypted - Whether the message was sent encrypted.
+ */
 
 /**
  * Represents a single RCON server connection.
+ * @class
  * @extends EventEmitter
  */
 class RCONConnection extends EventEmitter {
+  /** @type {net.Socket} */
   socket = new net.Socket();
 
+  /** @type {Buffer|null} */
   xorKey = null;
+
+  /** @type {string|null} */
   authToken = null;
 
-  // Auto-increment for every sent message to assign a unique ID for each request.
+  /** * Auto-increment for every sent message to assign a unique ID for each request.
+   * @type {number}
+   */
   transmitMessageIndex = 0;
 
-  // Continuous buffer to hold incoming TCP data until full messages are formed
+  /** * Continuous buffer to hold incoming TCP data until full messages are formed.
+   * @type {Buffer}
+   */
   receiveBuffer = Buffer.alloc(0);
 
-  // Key-value of active messages waiting for response
+  /** * Key-value map of active messages waiting for response.
+   * @type {Record<number, RequestCacheItem>}
+   */
   requestCache = {};
 
+  /** @type {number} */
+  messagesInAir = 0;
+
+  /** @type {string} */
   host;
+
+  /** @type {number} */
   port;
+
+  /** @type {string} */
   password;
 
+  /**
+   * Initializes the RCON connection.
+   * @param {Object} options - The initialization options.
+   * @param {RCONClient} options.client - The parent RCON client instance.
+   */
   constructor({ client }) {
     super();
-
-    this.client = client;
 
     // Define authentication parameters
     this.host = client.host;
@@ -40,8 +67,6 @@ class RCONConnection extends EventEmitter {
 
     // Handle socket closure
     this.socket.on("close", (error) => {
-      this.client.emit("socketClosed", error);
-
       if (error) {
         throw new Error("Socket closed due to transmission error.");
       } else {
@@ -51,14 +76,11 @@ class RCONConnection extends EventEmitter {
 
     // Socket is ready for communication
     this.socket.on("ready", async () => {
-      this.client.emit("socketReady");
-
       // Send ServerConnect command to initialize V2 connection
-      const serverConnectRequest = new RequestMessage(this, {
-        name: "ServerConnect"
-      });
-
-      const serverConnectResponse = await this.send(serverConnectRequest, { encrypt: false });
+      const serverConnectResponse = await this.send(
+        { name: "ServerConnect" },
+        { encrypt: false }
+      );
 
       // Ensure the ServerConnect was successful
       const { statusCode, statusMessage } = serverConnectResponse;
@@ -70,40 +92,50 @@ class RCONConnection extends EventEmitter {
     // Bind data listener to private #handlePacket method
     this.socket.on("data", this.#handlePacket.bind(this));
 
-    // Connect to socket
+    // Connect to the socket
     this.socket.connect(this.port, this.host);
   }
 
   /**
-   * Send a RequestMessage
-   *
-   * @param {RequestMessage} message
-   * @param {Object} options
-   * @returns {Promise<ResponseMessage>}
+   * Constructs and sends a RequestMessage to the RCON server.
+   * @param {Object} message - The message payload.
+   * @param {string} message.name - The command or action name.
+   * @param {string} [message.contentBody] - The body content of the message.
+   * @param {Object} [options={ encrypt: true }] - Transmission configuration.
+   * @param {boolean} [options.encrypt=true] - Whether to send the buffer encrypted.
+   * @returns {Promise<ResponseMessage>} The resolved response from the server.
    */
   async send(message, options = { encrypt: true }) {
-    const messageBuffer = options.encrypt ? message.toBuffer() : message.toUnencryptedBuffer();
+    this.transmitMessageIndex += 1;
+    const currentId = this.transmitMessageIndex;
+
+    const requestMessage = new RequestMessage(this, {
+      id: currentId,
+      name: message.name,
+      contentBody: message.contentBody
+    });
+
+    const messageBuffer = options.encrypt ? requestMessage.toBuffer() : requestMessage.toUnencryptedBuffer();
 
     this.socket.write(messageBuffer);
+    this.messagesInAir += 1;
 
     return new Promise((resolve) => {
       this.requestCache[this.transmitMessageIndex] = {
         resolve,
-        requestMessage: message,
+        requestMessage,
         encrypted: options.encrypt
       };
     });
   }
 
   /**
-   * Appends incoming data to the receive buffer and triggers processing
-   *
-   * @param {Buffer} data
+   * Appends incoming data to the receive buffer and triggers processing.
+   * @private
+   * @param {Buffer} data - The raw TCP chunk received from the socket.
    * @returns {void}
    */
   #handlePacket(data) {
-    totalRx += data.length;
-
     // Append the new data to the continuous receive buffer
     this.receiveBuffer = Buffer.concat([this.receiveBuffer, data]);
 
@@ -112,7 +144,9 @@ class RCONConnection extends EventEmitter {
   }
 
   /**
-   * Processes the buffer, extracting messages as soon as their full content length is received
+   * Processes the buffer, extracting messages as soon as their full content length is received.
+   * @private
+   * @returns {void}
    */
   #processBuffer() {
     // Loop to handle cases where multiple messages arrive in a single packet
@@ -135,14 +169,13 @@ class RCONConnection extends EventEmitter {
       // Advance the receive buffer to remove the processed message
       this.receiveBuffer = this.receiveBuffer.subarray(totalMessageLength);
 
-      // Get cached request
+      // Get cached request and format response
       const cachedRequest = this.requestCache[id];
-
-      // Generate ResponseMessage
       const responseMessage = new ResponseMessage(rawBuffer, cachedRequest);
 
-      // Call internal message handler
+      // Call internal message handler, decrement internal in-air counter
       this.#handleMessageInternal(responseMessage);
+      this.messagesInAir -= 1;
 
       // Resolve cached request and cleanup
       if (cachedRequest) {
@@ -153,9 +186,10 @@ class RCONConnection extends EventEmitter {
   }
 
   /**
-   * Internal message parser, for receiving ServerConnect and other internal library functions
-   *
-   * @param {ResponseMessage} responseMessage
+   * Internal message parser for handling ServerConnect and authentication routines.
+   * @private
+   * @param {ResponseMessage} responseMessage - The fully parsed incoming response.
+   * @returns {Promise<void>}
    */
   async #handleMessageInternal(responseMessage) {
     switch (responseMessage.name) {
@@ -165,12 +199,10 @@ class RCONConnection extends EventEmitter {
         const xorKeyB64 = responseMessage.contentBody;
         this.xorKey = Buffer.from(xorKeyB64, "base64");
 
-        const loginRequest = new RequestMessage(this, {
+        await this.send({
           name: "Login",
           contentBody: this.password
         });
-
-        await this.send(loginRequest);
 
         break;
       }
@@ -186,7 +218,7 @@ class RCONConnection extends EventEmitter {
 
         this.authToken = contentBody;
 
-        this.client.emit("ready");
+        this.emit("ready");
 
         break;
       }

@@ -1,35 +1,45 @@
 /**
  * Represents a message to be sent to the server.
+ * @class
  */
 class RequestMessage {
+  /** @type {number} */
   id;
 
-  client;
+  /** @type {number} */
   version = 2;
+
+  /** @type {string} */
   name;
+
+  /** @type {string} */
   contentBody;
 
+  /** @type {RCONConnection} */
+  connection;
+
   /**
-   * @param connection {RCONConnection}
-   * @param {Object} options
-   * @param {string} options.name The RCON command name.
-   * @param {string} [options.contentBody] The RCON command body if applicable.
+   * Initializes a new request message.
+   * @param {RCONConnection} connection - The connection this message belongs to.
+   * @param {Object} options - The message configuration.
+   * @param {string} options.name - The RCON command name.
+   * @param {string} [options.contentBody] - The RCON command body if applicable.
+   * @param {number} options.id - Internal request id.
    */
   constructor(connection, options) {
-    this.RCONConnection = connection;
+    this.connection = connection;
     this.name = options.name;
     this.contentBody = options.contentBody || "";
-    this.id = this.RCONConnection.transmitMessageIndex = this.RCONConnection.transmitMessageIndex + 1;
+    this.id = options.id;
   }
 
   /**
    * Wraps this RequestMessage in an unencrypted buffer to be directly sent through the socket.
-   *
-   * * @returns {Buffer<ArrayBuffer>}
+   * @returns {Buffer} The formatted unencrypted buffer.
    */
   toUnencryptedBuffer() {
     const body = {
-      AuthToken: this.RCONConnection.authToken || "",
+      AuthToken: this.connection.authToken || "",
       Version: this.version,
       Name: this.name,
       ContentBody: this.contentBody
@@ -49,17 +59,17 @@ class RequestMessage {
 
   /**
    * Wraps this RequestMessage in an encrypted buffer to be directly sent through the socket.
-   *
-   * @returns {Buffer<ArrayBuffer>}
+   * @returns {Buffer} The encrypted buffer ready for transmission.
+   * @throws {Error} Throws if the XOR key is missing.
    */
   toBuffer() {
     const unencryptedBuffer = this.toUnencryptedBuffer();
     const encryptedBuffer = Buffer.alloc(unencryptedBuffer.length);
-    const xorKey = this.RCONConnection.xorKey;
+    const xorKey = this.connection.xorKey;
 
     // Ensure the key exists to prevent division by zero or undefined errors
     if (!xorKey || xorKey.length === 0) {
-      throw new Error("XOR key is missing or empty on the client.");
+      throw new Error("XOR key is missing or empty.");
     }
 
     // Copy header over, unencrypted
