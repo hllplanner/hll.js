@@ -214,7 +214,8 @@ class RCONConnection extends EventEmitter {
         const { statusCode, contentBody } = responseMessage;
 
         if (statusCode !== 200) {
-          throw new Error("Error authenticating: Invalid RCON password.");
+          this.emit("loginError");
+          return;
         }
 
         this.authToken = contentBody;

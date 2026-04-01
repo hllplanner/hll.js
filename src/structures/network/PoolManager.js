@@ -65,6 +65,14 @@ class PoolManager {
         this.connections.push(connection);
         resolve();
       });
+
+      connection.on("loginError", () => {
+        if (this.client.listenerCount("loginError") > 0) {
+          this.client.emit("loginError");
+        } else {
+          reject(new Error("Invalid RCON password."));
+        }
+      });
     });
   }
 
