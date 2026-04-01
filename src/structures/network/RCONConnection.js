@@ -40,8 +40,18 @@ class RCONConnection extends EventEmitter {
    */
   requestCache = {};
 
+  /** * Queue of pending send operations waiting for capacity.
+   * @type {Array<Function>}
+   */
+  messageQueue = [];
+
   /** @type {number} */
   messagesInAir = 0;
+
+  /** * Maximum allowed concurrent requests to prevent server throttling.
+   * @type {number}
+   */
+  maxMessagesInAir = 100;
 
   /** @type {string} */
   host;
@@ -60,35 +70,29 @@ class RCONConnection extends EventEmitter {
   constructor({ client }) {
     super();
 
-    // Define authentication parameters
     this.host = client.host;
     this.port = client.port;
     this.password = client.password;
 
-    // Socket is ready for communication
     this.socket.on("ready", async () => {
-      // Send ServerConnect command to initialize V2 connection
       const serverConnectResponse = await this.send(
         { name: "ServerConnect" },
         { encrypt: false }
       );
 
-      // Ensure the ServerConnect was successful
       const { statusCode, statusMessage } = serverConnectResponse;
       if (statusCode !== 200) {
         throw new Error(`Error running ServerConnect: ${statusMessage}`);
       }
     });
 
-    // Bind data listener to private #handlePacket method
     this.socket.on("data", this.#handlePacket.bind(this));
-
-    // Connect to the socket
     this.socket.connect(this.port, this.host);
   }
 
   /**
    * Constructs and sends a RequestMessage to the RCON server.
+   * Enqueues the request if the maximum concurrent limit has been reached.
    * @param {Object} message - The message payload.
    * @param {string} message.name - The command or action name.
    * @param {string} [message.contentBody] - The body content of the message.
@@ -97,26 +101,34 @@ class RCONConnection extends EventEmitter {
    * @returns {Promise<ResponseMessage>} The resolved response from the server.
    */
   async send(message, options = { encrypt: true }) {
-    this.transmitMessageIndex += 1;
-    const currentId = this.transmitMessageIndex;
-
-    const requestMessage = new RequestMessage(this, {
-      id: currentId,
-      name: message.name,
-      contentBody: message.contentBody
-    });
-
-    const messageBuffer = options.encrypt ? requestMessage.toBuffer() : requestMessage.toUnencryptedBuffer();
-
-    this.socket.write(messageBuffer);
-    this.messagesInAir += 1;
-
     return new Promise((resolve) => {
-      this.requestCache[this.transmitMessageIndex] = {
-        resolve,
-        requestMessage,
-        encrypted: options.encrypt
+      const executeSend = () => {
+        this.transmitMessageIndex += 1;
+        const currentId = this.transmitMessageIndex;
+
+        const requestMessage = new RequestMessage(this, {
+          id: currentId,
+          name: message.name,
+          contentBody: message.contentBody
+        });
+
+        const messageBuffer = options.encrypt ? requestMessage.toBuffer() : requestMessage.toUnencryptedBuffer();
+
+        this.socket.write(messageBuffer);
+        this.messagesInAir += 1;
+
+        this.requestCache[this.transmitMessageIndex] = {
+          resolve,
+          requestMessage,
+          encrypted: options.encrypt
+        };
       };
+
+      if (this.messagesInAir < this.maxMessagesInAir) {
+        executeSend();
+      } else {
+        this.messageQueue.push(executeSend);
+      }
     });
   }
 
@@ -127,10 +139,7 @@ class RCONConnection extends EventEmitter {
    * @returns {void}
    */
   #handlePacket(data) {
-    // Append the new data to the continuous receive buffer
     this.receiveBuffer = Buffer.concat([this.receiveBuffer, data]);
-
-    // Attempt to process messages from the buffer
     this.#processBuffer();
   }
 
@@ -140,39 +149,44 @@ class RCONConnection extends EventEmitter {
    * @returns {void}
    */
   #processBuffer() {
-    // Loop to handle cases where multiple messages arrive in a single packet
-    // The header is 12 bytes long. We need at least 12 bytes to read the content length.
     while (this.receiveBuffer.length >= 12) {
 
       const id = this.receiveBuffer.readUInt32LE(4);
       const contentLength = this.receiveBuffer.readUInt32LE(8);
       const totalMessageLength = 12 + contentLength;
 
-      // Check if the buffer contains the entire message
-      // If not, break the loop and wait for the next packet
       if (this.receiveBuffer.length < totalMessageLength) {
         break;
       }
 
-      // Extract the exact bytes for this single message
       const rawBuffer = this.receiveBuffer.subarray(0, totalMessageLength);
-
-      // Advance the receive buffer to remove the processed message
       this.receiveBuffer = this.receiveBuffer.subarray(totalMessageLength);
 
-      // Get cached request and format response
       const cachedRequest = this.requestCache[id];
       const responseMessage = new ResponseMessage(rawBuffer, cachedRequest);
 
-      // Call internal message handler, decrement internal in-air counter
       this.#handleMessageInternal(responseMessage);
       this.messagesInAir -= 1;
 
-      // Resolve cached request and cleanup
       if (cachedRequest) {
         cachedRequest.resolve(responseMessage);
         delete this.requestCache[id];
       }
+
+      // Check if the queue has pending messages and process them
+      this.#processQueue();
+    }
+  }
+
+  /**
+   * Dispatches pending messages from the queue if there is available capacity.
+   * @private
+   * @returns {void}
+   */
+  #processQueue() {
+    while (this.messageQueue.length > 0 && this.messagesInAir < this.maxMessagesInAir) {
+      const nextSend = this.messageQueue.shift();
+      nextSend();
     }
   }
 
@@ -184,8 +198,6 @@ class RCONConnection extends EventEmitter {
    */
   async #handleMessageInternal(responseMessage) {
     switch (responseMessage.name) {
-
-      // Store XOR key and attempt to authenticate with the server
       case "ServerConnect": {
         const xorKeyB64 = responseMessage.contentBody;
         this.xorKey = Buffer.from(xorKeyB64, "base64");
@@ -198,17 +210,14 @@ class RCONConnection extends EventEmitter {
         break;
       }
 
-      // Store auth token after successful login
       case "Login": {
         const { statusCode, contentBody } = responseMessage;
 
-        // Validate successful authentication
         if (statusCode !== 200) {
           throw new Error("Error authenticating: Invalid RCON password.");
         }
 
         this.authToken = contentBody;
-
         this.emit("ready");
 
         break;
