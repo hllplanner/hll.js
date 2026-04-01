@@ -31,10 +31,37 @@ class PoolManager {
    * @returns {Promise<void>}
    */
   async #createConnection() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const connection = new RCONConnection({ client: this.client });
+      let isReady = false;
 
-      connection.on("ready", () => {
+      // Catch socket errors to prevent the Node.js process from crashing
+      // The 'close' event will automatically fire immediately after this, only need this listener to omit the unhandled exception.
+      connection.socket.once("error", () => null);
+
+      connection.socket.once("close", async () => {
+        // Always ensure the dead connection is removed from the active pool
+        this.connections = this.connections.filter((c) => c !== connection);
+
+        if (!isReady) {
+          // The socket died before it ever connected. Reject to prevent infinite hanging.
+          reject(new Error("Failed to establish initial RCON connection."));
+          return;
+        }
+
+        // The connection was previously healthy but dropped.
+        // Wait 5 seconds before attempting to connect.
+        await new Promise((r) => setTimeout(r, 5000));
+
+        // Attempt to replace the dead connection in the background.
+        // Catch the error here so a failed background reconnect doesn't crash the app.
+        this.#createConnection().catch((err) => {
+          console.error("Background reconnection attempt failed:", err.message);
+        });
+      });
+
+      connection.once("ready", () => {
+        isReady = true;
         this.connections.push(connection);
         resolve();
       });

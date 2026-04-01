@@ -65,15 +65,6 @@ class RCONConnection extends EventEmitter {
     this.port = client.port;
     this.password = client.password;
 
-    // Handle socket closure
-    this.socket.on("close", (error) => {
-      if (error) {
-        throw new Error("Socket closed due to transmission error.");
-      } else {
-        throw new Error("Socket closed.");
-      }
-    });
-
     // Socket is ready for communication
     this.socket.on("ready", async () => {
       // Send ServerConnect command to initialize V2 connection
