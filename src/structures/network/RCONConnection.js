@@ -95,7 +95,7 @@ class RCONConnection extends EventEmitter {
    * Enqueues the request if the maximum concurrent limit has been reached.
    * @param {Object} message - The message payload.
    * @param {string} message.name - The command or action name.
-   * @param {string} [message.contentBody] - The body content of the message.
+   * @param {Object|string} [message.contentBody] - The body content of the message.
    * @param {Object} [options={ encrypt: true }] - Transmission configuration.
    * @param {boolean} [options.encrypt=true] - Whether to send the buffer encrypted.
    * @returns {Promise<ResponseMessage>} The resolved response from the server.

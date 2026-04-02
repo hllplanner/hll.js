@@ -100,7 +100,7 @@ class PoolManager {
    * Sends an RCON message using the optimal connection from the pool.
    * @param {Object} options - The message payload.
    * @param {string} [options.name] - Optional name of the command.
-   * @param {string} [options.contentBody] - The main content of the message.
+   * @param {Object} [options.contentBody] - The main content of the message.
    * @returns {Promise<ResponseMessage>} The response from the RCON server.
    * @throws {Error} Throws if there are no available connections in the pool.
    */
