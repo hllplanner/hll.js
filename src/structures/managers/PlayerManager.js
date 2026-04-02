@@ -1,0 +1,68 @@
+const BaseManager = require("./BaseManager");
+const Player = require("../models/Player");
+
+/**
+ * Handles storage and manipulation of player data.
+ *
+ * @class
+ * @extends {BaseManager}
+ */
+class PlayerManager extends BaseManager {
+  /** @type {RCONClient} */
+  client;
+
+  /** @type {Map<string, Player>} */
+  cache;
+
+  /**
+   * Initializes PlayerManager.
+   *
+   * @param {RCONClient} client
+   */
+  constructor(client) {
+    super();
+
+    this.client = client;
+    this.cache = new Map();
+  }
+
+  /**
+   * Resolves a player data payload into a cached Player object and returns the Player instance.
+   *
+   * @param {Object} data
+   * @param {boolean} [isPartial=false]
+   * @returns {Player}
+   */
+  _cache(data, isPartial = false) {
+    let cachedPlayer = this.cache.get(data.iD);
+
+    if (cachedPlayer) {
+      cachedPlayer._patch(data);
+    } else {
+      cachedPlayer = new Player(this.client, data, isPartial);
+      this.cache.set(cachedPlayer.iD, cachedPlayer);
+    }
+
+    return cachedPlayer;
+  }
+
+  /**
+   * Fetches all players actively in the server.
+   *
+   * @returns {Promise<*>}
+   */
+  async fetchAllPlayers() {
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "players"
+      }
+    });
+
+    const body = this._validateResponse(response);
+
+    return body.players.map(p => this._cache(p));
+  }
+}
+
+module.exports = PlayerManager;

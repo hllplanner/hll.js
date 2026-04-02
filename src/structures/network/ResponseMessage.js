@@ -19,7 +19,7 @@ const xor = (buffer, xorKey) => {
   }
 
   return resultBuffer;
-}
+};
 
 /**
  * Represents a message sent from the server.
@@ -73,7 +73,13 @@ class ResponseMessage {
     this.statusMessage = statusMessage;
     this.version = version;
     this.name = name;
-    this.contentBody = contentBody;
+
+    // Attempt to parse response as json
+    try {
+      this.contentBody = JSON.parse(contentBody);
+    } catch {
+      this.contentBody = contentBody;
+    }
   }
 }
 
