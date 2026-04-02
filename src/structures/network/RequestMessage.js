@@ -29,8 +29,10 @@ class RequestMessage {
   constructor(connection, options) {
     this.connection = connection;
     this.name = options.name;
-    this.contentBody = options.contentBody || "";
     this.id = options.id;
+
+    // ContentBody should be a json string for all commands excluding ServerConnect and Login
+    this.contentBody = ["ServerConnect", "Login"].includes(this.name) ? options.contentBody : JSON.stringify(options.contentBody || "{}");
   }
 
   /**
