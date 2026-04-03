@@ -137,7 +137,14 @@ class Player {
   async punish(reason) {
   }
 
+  /**
+   * Kicks this player from the server.
+   *
+   * @param [reason]
+   * @returns {Promise<void>}
+   */
   async kick(reason) {
+    return this.client.players.kick(this.id, reason);
   }
 
   async tempBan(reason, duration) {

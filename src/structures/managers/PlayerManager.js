@@ -70,7 +70,6 @@ class PlayerManager extends BaseManager {
    * @returns {Player}
    * @throws {Error} If the player is not found.
    */
-
   async fetch(playerId) {
     this._validateParameter(playerId, "query");
 
@@ -87,6 +86,29 @@ class PlayerManager extends BaseManager {
     });
 
     return this._cache(body);
+  }
+
+  /**
+   * Kicks a player from the server.
+   *
+   * @param {string} player - The player ID or username.
+   * @param {string} [reason] - Reason to kick the player for.
+   * @throws {Error} - On server error.
+   * @throws {Error} - If player is undefined.
+   * @returns {Promise<void>}
+   */
+  async kick(player, reason) {
+    this._validateParameter(player, "player");
+
+    const response = await this.client.send({
+      name: "KickPlayer",
+      contentBody: {
+        PlayerId: player,
+        Reason: reason
+      }
+    });
+
+    this._validateResponse(response);
   }
 }
 
