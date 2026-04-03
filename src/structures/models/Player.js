@@ -71,7 +71,7 @@ class Player {
   /**
    * Initializes Player
    *
-   * @param {import("../client/RCONClient").RCONClient} client
+   * @param {RCONClient} client
    * @param {Object} data
    * @param {boolean} isPartial
    */

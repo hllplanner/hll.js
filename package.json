@@ -4,5 +4,14 @@
   "main": "./src/index.js",
   "repository": "https://github.com/hllplanner/hll.js",
   "author": "Finbar <finbar@finbar.xyz>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "jsdoc": "^4.0.5",
+    "minami": "^1.2.3",
+    "taffydb": "^2.7.3"
+  },
+  "scripts": {
+    "generate-docs": "jsdoc -c jsdoc.json --verbose"
+  },
+  "dependencies": {}
 }
