@@ -25,8 +25,6 @@ class RCONClient extends EventEmitter {
   players;
 
   /**
-   * Initializes RCONClient.
-   *
    * @param {Object} options - The connection parameters.
    * @param {string} [options.host] - RCON server host.
    * @param {number} [options.port] - RCON server port.

@@ -15,7 +15,6 @@ class PoolManager {
   connectionsCount;
 
   /**
-   * Initializes the pool manager with a client and connection count.
    * @param {Object} options - The configuration options for the pool manager.
    * @param {RCONClient} options.client - The parent RCON client instance.
    * @param {number} [options.connectionsCount=2] - The number of connections to maintain in the pool.

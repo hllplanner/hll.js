@@ -19,7 +19,6 @@ class RequestMessage {
   connection;
 
   /**
-   * Initializes a new request message.
    * @param {RCONConnection} connection - The connection this message belongs to.
    * @param {Object} options - The message configuration.
    * @param {string} options.name - The RCON command name.

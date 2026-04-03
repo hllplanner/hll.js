@@ -16,8 +16,6 @@ class PlayerManager extends BaseManager {
   cache;
 
   /**
-   * Initializes PlayerManager.
-   *
    * @param {RCONClient} client
    */
   constructor(client) {

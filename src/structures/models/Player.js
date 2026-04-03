@@ -69,8 +69,6 @@ class Player {
   worldPosition;
 
   /**
-   * Initializes Player
-   *
    * @param {RCONClient} client
    * @param {Object} data
    * @param {boolean} isPartial

@@ -63,7 +63,6 @@ class RCONConnection extends EventEmitter {
   password;
 
   /**
-   * Initializes the RCON connection.
    * @param {Object} options - The initialization options.
    * @param {RCONClient} options.client - The parent RCON client instance.
    */
