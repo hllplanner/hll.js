@@ -1,5 +1,6 @@
 const BaseManager = require("./BaseManager");
 const Player = require("../models/Player");
+const assert = require("node:assert");
 
 /**
  * Handles storage and manipulation of player data.
@@ -49,7 +50,7 @@ class PlayerManager extends BaseManager {
   /**
    * Fetches all players actively in the server.
    *
-   * @returns {Promise<*>}
+   * @returns {Promise<Array<Player>>}
    */
   async fetchAllPlayers() {
     const response = await this.client.send({
@@ -62,6 +63,32 @@ class PlayerManager extends BaseManager {
     const body = this._validateResponse(response);
 
     return body.players.map(p => this._cache(p));
+  }
+
+  /**
+   * Fetches information for a player.
+   *
+   * @param {string} playerId - The player's ID.
+   * @returns {Player}
+   * @throws {Error} If the player is not found.
+   */
+
+  async fetch(playerId) {
+    this._validateParameter(playerId, "query");
+
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "player",
+        Value: playerId
+      }
+    });
+
+    const body = this._validateResponse(response, {
+      500: "Player not found."
+    });
+
+    return this._cache(body);
   }
 }
 

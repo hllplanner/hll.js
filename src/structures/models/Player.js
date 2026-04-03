@@ -77,7 +77,7 @@ class Player {
    */
   constructor(client, data, isPartial) {
     // Hide the client reference from console.logs
-    Object.defineProperty(this, 'client', { value: client, enumerable: false });
+    Object.defineProperty(this, "client", { value: client, enumerable: false });
 
     this.partial = isPartial;
     this._patch(data);
@@ -128,9 +128,42 @@ class Player {
     }
 
     // Automatically clear the partial flag if we receive core state data
-    if ("team" in data || "role" in data || "worldPosition" in data) {
+    if ("scoreData" in data || "worldPosition" in data) {
       this.partial = false;
     }
+  }
+
+  async message(messageContent) {
+  }
+
+  async punish(reason) {
+  }
+
+  async kick(reason) {
+  }
+
+  async tempBan(reason, duration) {
+  }
+
+  async removeTempBan() {
+  }
+
+  async permaBan(reason) {
+  }
+
+  async removePermaBan() {
+  }
+
+  async addVIP(comment) {
+  }
+
+  async removeVIP() {
+  }
+
+  async removeFromPlatoon() {
+  }
+
+  async disbandPlatoon() {
   }
 }
 
