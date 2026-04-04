@@ -131,7 +131,14 @@ class Player {
     }
   }
 
+  /**
+   * Grants this player VIP status.
+   *
+   * @param {string} comment
+   * @returns {Promise<void>}
+   */
   async addVIP(comment) {
+    return this.client.players.addVIP(this.id, comment);
   }
 
   async disbandPlatoon() {
@@ -163,16 +170,22 @@ class Player {
   async punish(reason) {
   }
 
+  async removeFromPlatoon() {
+  }
+
   async removePermaBan() {
   }
 
   async removeTempBan() {
   }
 
-  async removeFromPlatoon() {
-  }
-
+  /**
+   * Removes this player's VIP status.
+   *
+   * @returns {Promise<void>}
+   */
   async removeVIP() {
+    return this.client.players.removeVIP(this.id);
   }
 
   async tempBan(reason, duration) {

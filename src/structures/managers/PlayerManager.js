@@ -1,6 +1,11 @@
 const BaseManager = require("./BaseManager");
 const Player = require("../models/Player");
-const assert = require("node:assert");
+
+/**
+ * @typedef {Object} VIPPlayer
+ * @property {string} id
+ * @property {string} comment
+ */
 
 /**
  * Handles storage and manipulation of player data.
@@ -43,6 +48,27 @@ class PlayerManager extends BaseManager {
     }
 
     return cachedPlayer;
+  }
+
+  /**
+   * Grants player VIP status.
+   *
+   * @param {string} playerId - The player's ID.
+   * @param {string} [comment] - A comment to identify this user in the VIP list.
+   * @returns {Promise<void>}
+   */
+  async addVIP(playerId, comment) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "AddVIP",
+      contentBody: {
+        PlayerId: playerId,
+        Comment: comment
+      }
+    });
+
+    this._validateResponse(response);
   }
 
   /**
@@ -93,7 +119,6 @@ class PlayerManager extends BaseManager {
    *
    * @param {string} player - The player ID or username.
    * @param {string} [reason] - Reason to kick the player for.
-   * @throws {Error} - On server error.
    * @throws {Error} - If player is undefined.
    * @returns {Promise<void>}
    */
@@ -112,11 +137,28 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Retrieves the list of VIP players for this server.
+   *
+   * @returns {Promise<Array<VIPPlayer>>}
+   */
+  async listVIPPlayers() {
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "Vipplayers"
+      }
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.vipPlayers.map(p => ({ id: p.iD, comment: p.comment }));
+  }
+
+  /**
    * Sends a message to a player.
    *
    * @param {string} player - The player ID or username.
    * @param {string} message - The message to send.
-   * @throws {Error} - On server error.
    * @throws {Error} - If player or message is undefined.
    * @returns {Promise<void>}
    */
@@ -129,6 +171,26 @@ class PlayerManager extends BaseManager {
       contentBody: {
         PlayerId: player,
         Message: message
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes a player's VIP status.
+   *
+   * @param {string} playerId
+   * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined.
+   */
+  async removeVIP(playerId) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "RemoveVIP",
+      contentBody: {
+        playerId
       }
     });
 
