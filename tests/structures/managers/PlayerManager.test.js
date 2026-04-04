@@ -62,4 +62,28 @@ describe("PlayerManager", () => {
       expect(newPlayerList.some(player => player.id === testPlayerId)).toBe(false);
     });
   });
+
+  describe("listPermaBans", () => {
+    it("should retrieve a list of permanent bans.", async () => {
+      const permaBans = await client.players.listPermaBans();
+
+      expect(Array.isArray(permaBans)).toBe(true);
+    });
+  });
+
+  describe("addPermaBan", () => {
+    it("should permanently ban a player.", async () => {
+      await client.players.permaBan("hlljs-int-test", "reason", "adminName");
+      const newBanList = await client.players.listPermaBans();
+      expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(true);
+    });
+  });
+
+  describe("removePermaBan", () => {
+    it("should remove a permanent ban.", async () => {
+      await client.players.removePermaBan("hlljs-int-test");
+      const newBanList = await client.players.listPermaBans();
+      expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(false);
+    });
+  });
 });

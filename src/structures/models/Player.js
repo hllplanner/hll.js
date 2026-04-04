@@ -164,7 +164,15 @@ class Player {
     return this.client.players.message(this.id, message);
   }
 
-  async permaBan(reason) {
+  /**
+   * Permanently ban this player.
+   *
+   * @param [reason]
+   * @param [adminName]
+   * @returns {Promise<void>}
+   */
+  async permaBan(reason, adminName) {
+    return this.client.players.permaBan(this.id, reason, adminName);
   }
 
   async punish(reason) {
@@ -173,7 +181,13 @@ class Player {
   async removeFromPlatoon() {
   }
 
+  /**
+   * Remove this player's permanent ban.
+   *
+   * @returns {Promise<void>}
+   */
   async removePermaBan() {
+    return this.client.players.removePermaBan(this.id);
   }
 
   async removeTempBan() {

@@ -8,6 +8,16 @@ const Player = require("../models/Player");
  */
 
 /**
+ * @typedef {Object} PermanentBanRecord
+ * @property {string} userId
+ * @property {string} userName
+ * @property {string} timeOfBanning
+ * @property {number} durationHours
+ * @property {string} banReason
+ * @property {string} adminName
+ */
+
+/**
  * Handles storage and manipulation of player data.
  *
  * @class
@@ -54,7 +64,7 @@ class PlayerManager extends BaseManager {
    * Grants player VIP status.
    *
    * @param {string} playerId - The player's ID.
-   * @param {string} [comment] - A comment to identify this user in the VIP list.
+   * @param {string} [comment] - A comment to identify this player in the VIP list.
    * @returns {Promise<void>}
    */
   async addVIP(playerId, comment) {
@@ -137,6 +147,21 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Lists permanent bans on record.
+   *
+   * @returns {Promise<Array<PermanentBanRecord>>}
+   */
+  async listPermaBans() {
+    const response = await this.client.send({
+      name: "GetPermanentBans"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.banList;
+  }
+
+  /**
    * Retrieves the list of VIP players for this server.
    *
    * @returns {Promise<Array<VIPPlayer>>}
@@ -171,6 +196,50 @@ class PlayerManager extends BaseManager {
       contentBody: {
         PlayerId: player,
         Message: message
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Permanently ban a player.
+   *
+   * @param {string} playerId
+   * @param {string} [reason]
+   * @param {string} [adminName]
+   * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined.
+   */
+  async permaBan(playerId, reason, adminName) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "PermanentBanPlayer",
+      contentBody: {
+        PlayerId: playerId,
+        Reason: reason,
+        AdminName: adminName
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes a player's permanent ban.
+   *
+   * @param playerId
+   * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined.
+   */
+  async removePermaBan(playerId) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "RemovePermanentBan",
+      contentBody: {
+        PlayerId: playerId
       }
     });
 
