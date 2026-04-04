@@ -6,12 +6,16 @@
   "author": "Finbar <finbar@finbar.xyz>",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "dotenv": "^17.4.0",
+    "jest": "^30.3.0",
     "jsdoc": "^4.0.5",
     "minami": "^1.2.3",
     "taffydb": "^2.7.3"
   },
   "scripts": {
-    "generate-docs": "jsdoc -c jsdoc.json --verbose"
+    "generate-docs": "jsdoc -c jsdoc.json --verbose",
+    "test": "jest"
   },
   "dependencies": {}
 }
