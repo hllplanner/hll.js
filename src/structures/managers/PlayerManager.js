@@ -46,24 +46,6 @@ class PlayerManager extends BaseManager {
   }
 
   /**
-   * Fetches all players actively in the server.
-   *
-   * @returns {Promise<Array<Player>>}
-   */
-  async fetchAllPlayers() {
-    const response = await this.client.send({
-      name: "GetServerInformation",
-      contentBody: {
-        Name: "players"
-      }
-    });
-
-    const body = this._validateResponse(response);
-
-    return body.players.map(p => this._cache(p));
-  }
-
-  /**
    * Fetches information for a player.
    *
    * @param {string} playerId - The player's ID.
@@ -86,6 +68,24 @@ class PlayerManager extends BaseManager {
     });
 
     return this._cache(body);
+  }
+
+  /**
+   * Fetches all players actively in the server.
+   *
+   * @returns {Promise<Array<Player>>}
+   */
+  async fetchAllPlayers() {
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "players"
+      }
+    });
+
+    const body = this._validateResponse(response);
+
+    return body.players.map(p => this._cache(p));
   }
 
   /**

@@ -131,17 +131,10 @@ class Player {
     }
   }
 
-  /**
-   * Sends this player a message.
-   *
-   * @param {string} message
-   * @returns {Promise<void>}
-   */
-  async message(message) {
-    return this.client.players.message(this.id, message);
+  async addVIP(comment) {
   }
 
-  async punish(reason) {
+  async disbandPlatoon() {
   }
 
   /**
@@ -154,28 +147,35 @@ class Player {
     return this.client.players.kick(this.id, reason);
   }
 
-  async tempBan(reason, duration) {
-  }
-
-  async removeTempBan() {
+  /**
+   * Sends this player a message.
+   *
+   * @param {string} message
+   * @returns {Promise<void>}
+   */
+  async message(message) {
+    return this.client.players.message(this.id, message);
   }
 
   async permaBan(reason) {
   }
 
+  async punish(reason) {
+  }
+
   async removePermaBan() {
   }
 
-  async addVIP(comment) {
-  }
-
-  async removeVIP() {
+  async removeTempBan() {
   }
 
   async removeFromPlatoon() {
   }
 
-  async disbandPlatoon() {
+  async removeVIP() {
+  }
+
+  async tempBan(reason, duration) {
   }
 }
 
