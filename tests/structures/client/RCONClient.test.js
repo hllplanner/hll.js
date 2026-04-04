@@ -1,5 +1,5 @@
 const { RCONClient } = require("../../../src");
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 describe("Invalid Password Without Handler", () => {
   let client;

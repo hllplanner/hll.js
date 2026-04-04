@@ -1,7 +1,10 @@
-const { RCONClient } = require("../../../src");
-require("dotenv").config();
+// Not all methods can be tested as they require players in the server.
+// Untested methods: kick, message
 
-describe("RCONClient", () => {
+const { RCONClient } = require("../../../src");
+require("dotenv").config({ quiet: true });
+
+describe("PlayerManager", () => {
   let client;
 
   beforeAll(async () => {
@@ -31,6 +34,32 @@ describe("RCONClient", () => {
       const players = await client.players.fetchAllPlayers();
 
       expect(Array.isArray(players)).toBe(true);
+    });
+  });
+
+  const testPlayerId = `hlljs-${Math.floor(Math.random() * 100)}`;
+
+  describe("listVIPPlayers", () => {
+    it("should retrieve a list of VIP players.", async () => {
+      const vipPlayers = await client.players.listVIPPlayers();
+
+      expect(Array.isArray(vipPlayers)).toBe(true);
+    });
+  });
+
+  describe("addVIP", () => {
+    it("should add a player to the server VIP list", async () => {
+      await client.players.addVIP(testPlayerId, "hlljs-int-test");
+      const newPlayerList = await client.players.listVIPPlayers();
+      expect(newPlayerList.some(player => player.id === testPlayerId)).toBe(true);
+    });
+  });
+
+  describe("removeVIP", () => {
+    it("should remove a player from the server VIP list.", async () => {
+      await client.players.removeVIP(testPlayerId);
+      const newPlayerList = await client.players.listVIPPlayers();
+      expect(newPlayerList.some(player => player.id === testPlayerId)).toBe(false);
     });
   });
 });
