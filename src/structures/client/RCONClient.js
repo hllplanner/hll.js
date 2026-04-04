@@ -54,6 +54,15 @@ class RCONClient extends EventEmitter {
   }
 
   /**
+   * Forcibly disconnects the client and shuts down all active network connections.
+   */
+  disconnect() {
+    if (this.pool) {
+      this.pool.disconnect();
+    }
+  }
+
+  /**
    * Sends an RCON message.
    *
    * @param {Object} options - The message options.

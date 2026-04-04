@@ -14,6 +14,9 @@ class PoolManager {
   /** @type {number} */
   connectionsCount;
 
+  /** @type {boolean} */
+  isDestroyed = false;
+
   /**
    * @param {Object} options - The configuration options for the pool manager.
    * @param {RCONClient} options.client - The parent RCON client instance.
@@ -41,6 +44,9 @@ class PoolManager {
       connection.socket.once("close", async () => {
         // Always ensure the dead connection is removed from the active pool
         this.connections = this.connections.filter((c) => c !== connection);
+
+        // Dont attempt to reestablish connection if client is destroyed.
+        if (this.isDestroyed) return;
 
         if (!isReady) {
           // The socket died before it ever connected. Reject to prevent infinite hanging.
@@ -83,6 +89,19 @@ class PoolManager {
     for (let i = 0; i < this.connectionsCount; i++) {
       await this.#createConnection();
     }
+  }
+
+  /**
+   * Shuts down all active connections and prevents future reconnections.
+   */
+  disconnect() {
+    this.isDestroyed = true;
+
+    for (const connection of this.connections) {
+      connection.disconnect();
+    }
+
+    this.connections = [];
   }
 
   /**

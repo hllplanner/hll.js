@@ -90,6 +90,13 @@ class RCONConnection extends EventEmitter {
   }
 
   /**
+   * Closes the socket.
+   */
+  disconnect() {
+    this.socket.destroy();
+  }
+
+  /**
    * Constructs and sends a RequestMessage to the RCON server.
    * Enqueues the request if the maximum concurrent limit has been reached.
    * @param {Object} message - The message payload.
