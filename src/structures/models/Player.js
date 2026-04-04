@@ -131,7 +131,14 @@ class Player {
     }
   }
 
-  async message(messageContent) {
+  /**
+   * Sends this player a message.
+   *
+   * @param {string} message
+   * @returns {Promise<void>}
+   */
+  async message(message) {
+    return this.client.players.message(this.id, message);
   }
 
   async punish(reason) {

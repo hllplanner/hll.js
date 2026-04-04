@@ -110,6 +110,30 @@ class PlayerManager extends BaseManager {
 
     this._validateResponse(response);
   }
+
+  /**
+   * Sends a message to a player.
+   *
+   * @param {string} player - The player ID or username.
+   * @param {string} message - The message to send.
+   * @throws {Error} - On server error.
+   * @throws {Error} - If player or message is undefined.
+   * @returns {Promise<void>}
+   */
+  async message(player, message) {
+    this._validateParameter(player, "player");
+    this._validateParameter(message, "message");
+
+    const response = await this.client.send({
+      name: "MessagePlayer",
+      contentBody: {
+        PlayerId: player,
+        Message: message
+      }
+    });
+
+    this._validateResponse(response);
+  }
 }
 
 module.exports = PlayerManager;
