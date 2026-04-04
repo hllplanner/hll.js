@@ -67,8 +67,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # This must match the output directory specified in your jsdoc config
-          path: './out'
+          path: './docs'
 
       - name: Deploy to GitHub Pages
         id: deployment
