@@ -1,6 +1,69 @@
 const { RCONClient } = require("../../../src");
 require("dotenv").config();
 
+describe("Invalid Password Without Handler", () => {
+  let client;
+
+  beforeAll(async () => {
+    client = new RCONClient({
+      host: process.env.RCON_HOST,
+      port: process.env.RCON_PORT,
+      password: process.env.RCON_PASSWORD + "1"
+    });
+  });
+
+  afterAll(() => {
+    // Destroy all active sockets so the Jest process can exit cleanly
+    client.disconnect();
+  });
+
+  describe("Connection Attempt", () => {
+    it("should fail hard", async () => {
+      // Use .rejects.toThrow() and await the expectation for async functions
+      await expect(client.init()).rejects.toThrow("Invalid RCON password");
+    });
+  });
+});
+
+describe("Invalid Password With Handler", () => {
+  let client;
+
+  beforeAll(async () => {
+    client = new RCONClient({
+      host: process.env.RCON_HOST,
+      port: process.env.RCON_PORT,
+      password: process.env.RCON_PASSWORD + "1"
+    });
+  });
+
+  afterAll(() => {
+    client.disconnect();
+  });
+
+  describe("Connection Attempt", () => {
+    it("should emit 'loginError' instead of throwing an error", async () => {
+      const loginErrorMock = jest.fn();
+
+      // Create a promise that resolves specifically when the event is emitted
+      const eventFired = new Promise((resolve) => {
+        client.on("loginError", () => {
+          loginErrorMock();
+          resolve();
+        });
+      });
+
+      // Execute init without awaiting it so the test does not hang
+      client.init().catch(() => {});
+
+      // Await our custom promise instead
+      await eventFired;
+
+      expect(loginErrorMock).toHaveBeenCalled();
+      expect(loginErrorMock).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
 describe("RCONClient", () => {
   let client;
 
