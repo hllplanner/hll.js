@@ -190,7 +190,7 @@ class PlayerManager extends BaseManager {
     const response = await this.client.send({
       name: "RemoveVIP",
       contentBody: {
-        playerId
+        PlayerId: playerId
       }
     });
 
