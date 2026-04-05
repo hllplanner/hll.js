@@ -82,6 +82,35 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Disbands a platoon.
+   *
+   * @param {string|number} team - The number of name of the team, ex: 0, or "AXIS"
+   * @param {string|number} platoon - The name of the platoon, ex: 0 or "ABLE"
+   * @param {string} [reason]
+   * @returns {Promise<void>}
+   */
+  async disbandPlatoon(team, platoon, reason) {
+    // They can be strings or ints, so just make sure they exist.
+    this._validateParameter(team, "team", {
+      nonEmptyString: false
+    });
+    this._validateParameter(platoon, "team", {
+      nonEmptyString: false
+    });
+
+    const response = await this.client.send({
+      name: "DisbandPlatoon",
+      contentBody: {
+        TeamIndex: team,
+        SquadIndex: platoon,
+        Reason: reason
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Fetches information for a player.
    *
    * @param {string} playerId - The player's ID.

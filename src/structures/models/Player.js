@@ -141,9 +141,6 @@ class Player {
     return this.client.players.addVIP(this.id, comment);
   }
 
-  async disbandPlatoon() {
-  }
-
   /**
    * Kicks this player from the server.
    *
