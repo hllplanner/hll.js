@@ -74,7 +74,7 @@ class Player {
    * @param {boolean} isPartial
    */
   constructor(client, data, isPartial) {
-    // Hide the client reference from console.logs
+    // Hide the client reference from console logs
     Object.defineProperty(this, "client", { value: client, enumerable: false });
 
     this.partial = isPartial;
@@ -125,7 +125,7 @@ class Player {
       };
     }
 
-    // Automatically clear the partial flag if we receive core state data
+    // Automatically clear the partial flag if core state data is received
     if ("scoreData" in data || "worldPosition" in data) {
       this.partial = false;
     }
@@ -144,7 +144,7 @@ class Player {
   /**
    * Kicks this player from the server.
    *
-   * @param [reason]
+   * @param {string} [reason]
    * @returns {Promise<void>}
    */
   async kick(reason) {
@@ -164,8 +164,8 @@ class Player {
   /**
    * Permanently ban this player.
    *
-   * @param [reason]
-   * @param [adminName]
+   * @param {string} [reason]
+   * @param {string} [adminName]
    * @returns {Promise<void>}
    */
   async permaBan(reason, adminName) {
@@ -175,7 +175,7 @@ class Player {
   /**
    * Punishes this player.
    *
-   * @param [reason]
+   * @param {string} [reason]
    * @returns {Promise<void>}
    */
   async punish(reason) {
@@ -185,11 +185,12 @@ class Player {
   /**
    * Removes this player from their platoon.
    *
+   * @param {string} [reason]
    * @returns {Promise<void>}
    * @throws {Error} - If the player is commander or not in a unit.
    */
-  async removeFromPlatoon() {
-    return this.client.players.removePlayerFromPlatoon(this.id);
+  async removeFromPlatoon(reason) {
+    return this.client.players.removePlayerFromPlatoon(this.id, reason);
   }
 
   /**
