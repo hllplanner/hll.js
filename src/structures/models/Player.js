@@ -255,7 +255,7 @@ class Player {
   /**
    * Switch this player's team.
    *
-   * @param {boolean=true} [switchNow] - Whether to switch this player's team immediately, as opposed to on death.
+   * @param {boolean} [switchNow=true] - Whether to switch this player's team immediately, as opposed to on death.
    * @returns {Promise<void>}
    */
   async switchTeams(switchNow) {

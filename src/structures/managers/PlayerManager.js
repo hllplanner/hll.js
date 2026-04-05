@@ -457,7 +457,7 @@ class PlayerManager extends BaseManager {
    * Switches a player's team.
    *
    * @param {string} playerId
-   * @param {boolean=true} [switchNow] - Whether to switch this player's team immediately, as opposed to on death.
+   * @param {boolean} [switchNow=true] - Whether to switch this player's team immediately, as opposed to on death.
    * @returns {Promise<void>}
    */
   async switchTeams(playerId, switchNow = true) {
