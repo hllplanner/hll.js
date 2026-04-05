@@ -215,6 +215,7 @@ class Player {
    * @param {string} [reason]
    * @param {string} [adminName]
    * @returns {Promise<void>}
+   * @throws {Error} - If duration isn't a positive integer.
    */
   async tempBan(duration, reason, adminName) {
     return this.client.players.tempBan(this.id, duration, reason, adminName);

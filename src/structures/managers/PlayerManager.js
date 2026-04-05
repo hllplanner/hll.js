@@ -286,6 +286,7 @@ class PlayerManager extends BaseManager {
    *
    * @param {string} playerId
    * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined
    */
   async removeTempBan(playerId) {
     this._validateParameter(playerId, "playerId");
@@ -308,6 +309,8 @@ class PlayerManager extends BaseManager {
    * @param {string} [reason]
    * @param {string} [adminName]
    * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined.
+   * @throws {Error} - If duration isn't a positive integer.
    */
   async tempBan(playerId, duration, reason, adminName) {
     this._validateParameter(playerId, "playerId");
