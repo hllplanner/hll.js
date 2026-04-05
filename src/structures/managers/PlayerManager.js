@@ -95,7 +95,7 @@ class PlayerManager extends BaseManager {
     this._validateParameter(team, "team", {
       nonEmptyString: false
     });
-    this._validateParameter(platoon, "team", {
+    this._validateParameter(platoon, "platoon", {
       nonEmptyString: false
     });
 
@@ -115,7 +115,7 @@ class PlayerManager extends BaseManager {
    * Fetches information for a player.
    *
    * @param {string} playerId - The player's ID.
-   * @returns {Player}
+   * @returns {Promise<Player>}
    * @throws {Error} If the player is not found.
    */
   async fetch(playerId) {
@@ -157,18 +157,18 @@ class PlayerManager extends BaseManager {
   /**
    * Kicks a player from the server.
    *
-   * @param {string} player - The player ID or username.
+   * @param {string} playerId - The player ID or username.
    * @param {string} [reason] - Reason to kick the player for.
    * @throws {Error} - If player is undefined.
    * @returns {Promise<void>}
    */
-  async kick(player, reason) {
-    this._validateParameter(player, "player");
+  async kick(playerId, reason) {
+    this._validateParameter(playerId, "player");
 
     const response = await this.client.send({
       name: "KickPlayer",
       contentBody: {
-        PlayerId: player,
+        PlayerId: playerId,
         Reason: reason
       }
     });
@@ -227,19 +227,19 @@ class PlayerManager extends BaseManager {
   /**
    * Sends a message to a player.
    *
-   * @param {string} player - The player ID or username.
+   * @param {string} playerId - The player ID or username.
    * @param {string} message - The message to send.
    * @throws {Error} - If player or message is undefined.
    * @returns {Promise<void>}
    */
-  async message(player, message) {
-    this._validateParameter(player, "player");
+  async message(playerId, message) {
+    this._validateParameter(playerId, "player");
     this._validateParameter(message, "message");
 
     const response = await this.client.send({
       name: "MessagePlayer",
       contentBody: {
-        PlayerId: player,
+        PlayerId: playerId,
         Message: message
       }
     });
@@ -296,7 +296,7 @@ class PlayerManager extends BaseManager {
   /**
    * Removes a player's permanent ban.
    *
-   * @param playerId
+   * @param {string} playerId
    * @returns {Promise<void>}
    * @throws {Error} - If playerId is undefined.
    */
@@ -360,7 +360,7 @@ class PlayerManager extends BaseManager {
    *
    * @param {string} playerId
    * @returns {Promise<void>}
-   * @throws {Error} - If playerId is undefined
+   * @throws {Error} - If playerId is undefined.
    */
   async removeTempBan(playerId) {
     this._validateParameter(playerId, "playerId");
