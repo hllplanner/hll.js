@@ -163,7 +163,7 @@ class PlayerManager extends BaseManager {
    * @returns {Promise<void>}
    */
   async kick(playerId, reason) {
-    this._validateParameter(playerId, "player");
+    this._validateParameter(playerId, "playerId");
 
     const response = await this.client.send({
       name: "KickPlayer",
@@ -233,7 +233,7 @@ class PlayerManager extends BaseManager {
    * @returns {Promise<void>}
    */
   async message(playerId, message) {
-    this._validateParameter(playerId, "player");
+    this._validateParameter(playerId, "playerId");
     this._validateParameter(message, "message");
 
     const response = await this.client.send({
