@@ -18,6 +18,13 @@ const Player = require("../models/Player");
  */
 
 /**
+ * @typedef {Object} AdminUserRecord
+ * @property {string} userId
+ * @property {string} group
+ * @property {string} comment
+ */
+
+/**
  * Handles storage and manipulation of player data.
  *
  * @class
@@ -58,6 +65,30 @@ class PlayerManager extends BaseManager {
     }
 
     return cachedPlayer;
+  }
+
+  /**
+   * Adds a user as an admin.
+   *
+   * @param {string} playerId
+   * @param {string} adminGroup
+   * @param {string} [comment]
+   * @returns {Promise<void>}
+   */
+  async addAdmin(playerId, adminGroup, comment) {
+    this._validateParameter(playerId, "playerId");
+    this._validateParameter(adminGroup, "adminGroup");
+
+    const response = await this.client.send({
+      name: "AddAdmin",
+      contentBody: {
+        PlayerId: playerId,
+        AdminGroup: adminGroup,
+        Comment: comment
+      }
+    });
+
+    this._validateResponse(response);
   }
 
   /**
@@ -177,6 +208,34 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Lists admin groups.
+   *
+   * @returns {Promise<Array<string>>}
+   */
+  async listAdminGroups() {
+    const response = await this.client.send({
+      name: "GetAdminGroups"
+    });
+
+    return response.contentBody.groupNames;
+  }
+
+  /**
+   * Lists admin users.
+   *
+   * @returns {Promise<Array<AdminUserRecord>>}
+   */
+  async listAdminUsers() {
+    const response = await this.client.send({
+      name: "GetAdminUsers"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.adminUsers;
+  }
+
+  /**
    * Lists permanent bans on record.
    *
    * @returns {Promise<Array<BanRecord>>}
@@ -287,6 +346,25 @@ class PlayerManager extends BaseManager {
       contentBody: {
         PlayerId: playerId,
         Reason: reason
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes this player as an admin.
+   *
+   * @param {string} playerId
+   * @returns {Promise<void>}
+   */
+  async removeAdmin(playerId) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "RemoveAdmin",
+      contentBody: {
+        PlayerId: playerId
       }
     });
 

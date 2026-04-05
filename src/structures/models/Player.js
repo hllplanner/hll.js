@@ -132,6 +132,17 @@ class Player {
   }
 
   /**
+   * Add this user as an admin.
+   *
+   * @param {string} adminGroup
+   * @param {string} [comment]
+   * @returns {Promise<void>}
+   */
+  async addAdmin(adminGroup, comment) {
+    return this.client.players.addAdmin(this.id, adminGroup, comment);
+  }
+
+  /**
    * Grants this player VIP status.
    *
    * @param {string} comment
@@ -180,6 +191,14 @@ class Player {
    */
   async punish(reason) {
     return this.client.players.punish(this.id, reason);
+  }
+
+  /**
+   * Remove this user as an admin.
+   * @returns {Promise<void>}
+   */
+  async removeAdmin() {
+    return this.client.players.removeAdmin(this.id);
   }
 
   /**

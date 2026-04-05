@@ -1,5 +1,5 @@
 // Not all methods can be tested as they require players in the server.
-// Untested methods: kick, message, disbandPlatoon, punish, removePlayerFromPlatoon
+// Untested methods: kick, message, disbandPlatoon, punish, removePlayerFromPlatoon, switchTeams
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });
@@ -108,6 +108,39 @@ describe("PlayerManager", () => {
       await client.players.removeTempBan("hlljs-int-test");
       const newBanList = await client.players.listTempBans();
       expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(false);
+    });
+  });
+
+  describe("listAdminGroups", () => {
+    it("should retrieve a list of admin groups.", async () => {
+      const adminGroups = await client.players.listAdminGroups();
+
+      expect(Array.isArray(adminGroups)).toBe(true);
+    });
+  });
+
+  describe("listAdminUsers", () => {
+    it("should retrieve a list of admin users.", async () => {
+      const adminUsers = await client.players.listAdminUsers();
+
+      expect(Array.isArray(adminUsers)).toBe(true);
+    });
+  });
+
+  // Cant use hyphens in the userId field for admins for some reason.
+  describe("addAdmin", () => {
+    it("should add a user as an admin.", async () => {
+      await client.players.addAdmin("hlljsinttest", "owner", "hlljsinttest");
+      const newAdminList = await client.players.listAdminUsers();
+      expect(newAdminList.some(admin => admin.userId === "hlljsinttest")).toBe(true);
+    });
+  });
+
+  describe("removeAdmin", () => {
+    it("should remove a user as an admin.", async () => {
+      await client.players.removeAdmin("hlljsinttest");
+      const newAdminList = await client.players.listAdminUsers();
+      expect(newAdminList.some(admin => admin.userId === "hlljsinttest")).toBe(false);
     });
   });
 });
