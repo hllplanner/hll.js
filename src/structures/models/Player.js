@@ -172,7 +172,14 @@ class Player {
     return this.client.players.permaBan(this.id, reason, adminName);
   }
 
+  /**
+   * Punishes this player.
+   *
+   * @param [reason]
+   * @returns {Promise<void>}
+   */
   async punish(reason) {
+    return this.client.players.punish(this.id, reason);
   }
 
   async removeFromPlatoon() {

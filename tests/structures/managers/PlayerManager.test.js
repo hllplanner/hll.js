@@ -1,5 +1,5 @@
 // Not all methods can be tested as they require players in the server.
-// Untested methods: kick, message, disbandPlatoon
+// Untested methods: kick, message, disbandPlatoon, punish
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });

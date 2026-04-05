@@ -88,6 +88,7 @@ class PlayerManager extends BaseManager {
    * @param {string|number} platoon - The name of the platoon, ex: 0 or "ABLE"
    * @param {string} [reason]
    * @returns {Promise<void>}
+   * @throws {Error} - If team or platoon is undefined.
    */
   async disbandPlatoon(team, platoon, reason) {
     // They can be strings or ints, so just make sure they exist.
@@ -264,6 +265,28 @@ class PlayerManager extends BaseManager {
         PlayerId: playerId,
         Reason: reason,
         AdminName: adminName
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Punishes a player.
+   *
+   * @param {string} playerId
+   * @param {string} [reason]
+   * @returns {Promise<void>}
+   * @throws {Error} - If playerId is undefined.
+   */
+  async punish(playerId, reason) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "PunishPlayer",
+      contentBody: {
+        PlayerId: playerId,
+        Reason: reason
       }
     });
 
