@@ -376,6 +376,31 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Switches a player's team.
+   *
+   * @param {string} playerId
+   * @param {boolean=true} [switchNow] - Whether to switch this player's team immediately, as opposed to on death.
+   * @returns {Promise<void>}
+   */
+  async switchTeams(playerId, switchNow = true) {
+    this._validateParameter(playerId, "playerId");
+    this._validateParameter(switchNow, "switchNow", {
+      nonEmptyString: false,
+      boolean: true
+    });
+
+    const response = await this.client.send({
+      name: "ForceTeamSwitch",
+      contentBody: {
+        PlayerId: playerId,
+        ForceMode: Number(switchNow)
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Temporarily ban a player from the server.
    *
    * @param {string} playerId

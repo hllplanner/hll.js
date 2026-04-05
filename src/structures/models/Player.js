@@ -232,6 +232,16 @@ class Player {
   async tempBan(duration, reason, adminName) {
     return this.client.players.tempBan(this.id, duration, reason, adminName);
   }
+
+  /**
+   * Switch this player's team.
+   *
+   * @param {boolean=true} [switchNow] - Whether to switch this player's team immediately, as opposed to on death.
+   * @returns {Promise<void>}
+   */
+  async switchTeams(switchNow) {
+    return this.client.players.switchTeams(this.id, switchNow);
+  }
 }
 
 module.exports = Player;
