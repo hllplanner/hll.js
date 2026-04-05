@@ -314,6 +314,28 @@ class PlayerManager extends BaseManager {
   }
 
   /**
+   * Removes a player from their platoon.
+   *
+   * @param {string} playerId
+   * @param {string} [reason]
+   * @returns {Promise<void>}
+   * @throws {Error} - If player is commander or isn't in a platoon.
+   */
+  async removePlayerFromPlatoon(playerId, reason) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "RemovePlayerFromPlatoon",
+      contentBody: {
+        PlayerId: playerId,
+        Reason: reason,
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Removes a player's VIP status.
    *
    * @param {string} playerId

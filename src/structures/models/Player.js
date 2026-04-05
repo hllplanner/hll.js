@@ -182,7 +182,14 @@ class Player {
     return this.client.players.punish(this.id, reason);
   }
 
+  /**
+   * Removes this player from their platoon.
+   *
+   * @returns {Promise<void>}
+   * @throws {Error} - If the player is commander or not in a unit.
+   */
   async removeFromPlatoon() {
+    return this.client.players.removePlayerFromPlatoon(this.id);
   }
 
   /**
