@@ -31,8 +31,9 @@ class BaseManager {
    * @param {Object} [conditions] - Conditions to be met.
    * @param {boolean} [conditions.defined=true] - Parameter must not be null or undefined.
    * @param {boolean} [conditions.nonEmptyString=true] - Parameter must be a non-empty string.
+   * @param {boolean} [conditions.positiveInteger=false] - Parameter must be a positive integer.
    */
-  _validateParameter(value, name, conditions = { defined: true, nonEmptyString: true }) {
+  _validateParameter(value, name, conditions = { defined: true, nonEmptyString: true, positiveInteger: false }) {
     if (conditions.defined && (value === null || value === undefined)) {
       throw new Error(`Validation Error: '${name}' is required but was undefined or null.`);
     }
@@ -45,6 +46,10 @@ class BaseManager {
       if (value.trim().length === 0) {
         throw new Error(`Validation Error: '${name}' cannot be an empty string.`);
       }
+    }
+
+    if (conditions.positiveInteger && (!Number.isInteger(value) || value <= 0)) {
+      throw new Error(`Validation Error: '${name}' must be a positive integer.`);
     }
   }
 }

@@ -86,4 +86,28 @@ describe("PlayerManager", () => {
       expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(false);
     });
   });
+
+  describe("listTempBans", () => {
+    it("should retrieve a list of temporary bans.", async () => {
+      const tempBans = await client.players.listTempBans();
+
+      expect(Array.isArray(tempBans)).toBe(true);
+    });
+  });
+
+  describe("addTempBan", () => {
+    it("should temporarily ban a player.", async () => {
+      await client.players.tempBan("hlljs-int-test", 2, "reason", "adminName");
+      const newBanList = await client.players.listTempBans();
+      expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(true);
+    });
+  });
+
+  describe("removeTempBan", () => {
+    it("should remove a temporary ban.", async () => {
+      await client.players.removeTempBan("hlljs-int-test");
+      const newBanList = await client.players.listTempBans();
+      expect(newBanList.some(ban => ban.userId === "hlljs-int-test")).toBe(false);
+    });
+  });
 });

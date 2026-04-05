@@ -190,7 +190,13 @@ class Player {
     return this.client.players.removePermaBan(this.id);
   }
 
+  /**
+   * Removes this player's temporary ban.
+   *
+   * @returns {Promise<void>}
+   */
   async removeTempBan() {
+    return this.client.players.removeTempBan(this.id);
   }
 
   /**
@@ -202,7 +208,16 @@ class Player {
     return this.client.players.removeVIP(this.id);
   }
 
-  async tempBan(reason, duration) {
+  /**
+   * Temporarily bans this player.
+   *
+   * @param {number} duration - The number in hours for the temporary ban.
+   * @param {string} [reason]
+   * @param {string} [adminName]
+   * @returns {Promise<void>}
+   */
+  async tempBan(duration, reason, adminName) {
+    return this.client.players.tempBan(this.id, duration, reason, adminName);
   }
 }
 

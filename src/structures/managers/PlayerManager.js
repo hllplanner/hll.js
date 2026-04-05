@@ -8,7 +8,7 @@ const Player = require("../models/Player");
  */
 
 /**
- * @typedef {Object} PermanentBanRecord
+ * @typedef {Object} BanRecord
  * @property {string} userId
  * @property {string} userName
  * @property {string} timeOfBanning
@@ -149,11 +149,26 @@ class PlayerManager extends BaseManager {
   /**
    * Lists permanent bans on record.
    *
-   * @returns {Promise<Array<PermanentBanRecord>>}
+   * @returns {Promise<Array<BanRecord>>}
    */
   async listPermaBans() {
     const response = await this.client.send({
       name: "GetPermanentBans"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.banList;
+  }
+
+  /**
+   * Lists temporary bans on record.
+   *
+   * @returns {Promise<Array<BanRecord>>}
+   */
+  async listTempBans() {
+    const response = await this.client.send({
+      name: "GetTemporaryBans"
     });
 
     this._validateResponse(response);
@@ -260,6 +275,55 @@ class PlayerManager extends BaseManager {
       name: "RemoveVIP",
       contentBody: {
         PlayerId: playerId
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes a temporary ban.
+   *
+   * @param {string} playerId
+   * @returns {Promise<void>}
+   */
+  async removeTempBan(playerId) {
+    this._validateParameter(playerId, "playerId");
+
+    const response = await this.client.send({
+      name: "RemoveTemporaryBan",
+      contentBody: {
+        PlayerId: playerId
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Temporarily ban a player from the server.
+   *
+   * @param {string} playerId
+   * @param {number} duration - The ban duration in hours.
+   * @param {string} [reason]
+   * @param {string} [adminName]
+   * @returns {Promise<void>}
+   */
+  async tempBan(playerId, duration, reason, adminName) {
+    this._validateParameter(playerId, "playerId");
+    // Technically duration can be sent undefined, but the ban will be for an absurdly large random number of hours, then the user can not be unbanned until their temporary ban duration is explicitly redeclared.
+    this._validateParameter(duration, "duration", {
+      nonEmptyString: false,
+      positiveInteger: true
+    });
+
+    const response = await this.client.send({
+      name: "TemporaryBanPlayer",
+      contentBody: {
+        PlayerId: playerId,
+        Duration: duration,
+        Reason: reason,
+        AdminName: adminName
       }
     });
 
