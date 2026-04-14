@@ -47,7 +47,7 @@ class ResponseMessage {
   /** @type {string} */
   name;
 
-  /** @type {string} */
+  /** @type {Object|string} */
   contentBody;
 
   /**

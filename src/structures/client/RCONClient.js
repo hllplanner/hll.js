@@ -1,6 +1,7 @@
 const { EventEmitter } = require("node:events");
 const PoolManager = require("../network/PoolManager");
 const PlayerManager = require("../managers/PlayerManager");
+const SessionManager = require("../managers/SessionManager");
 
 /**
  * Represents the RCON client, its connections, and managers.
@@ -24,6 +25,9 @@ class RCONClient extends EventEmitter {
   /** @type {PlayerManager} */
   players;
 
+  /** @type {SessionManager} */
+  session;
+
   /**
    * @param {Object} options - The connection parameters.
    * @param {string} [options.host] - RCON server host.
@@ -38,6 +42,7 @@ class RCONClient extends EventEmitter {
     this.password = password;
 
     this.players = new PlayerManager(this);
+    this.session = new SessionManager(this);
   }
 
   /**
