@@ -1,16 +1,24 @@
 {
   "source": {
-    "include": ["src"],
+    "include": [
+      "src"
+    ],
     "includePattern": ".js$"
   },
   "opts": {
     "destination": "./docs",
     "recurse": true,
-    "template": "node_modules/minami"
+    "template": "node_modules/jaguarjs-jsdoc"
   },
   "templates": {
     "default": {
-      "outputSourceFiles": false
+      "outputSourceFiles": true
+    },
+    "applicationName": "hll.js",
+    "linenums": true,
+    "meta": {
+      "title": "hll.js - Documentation",
+      "description": "hll.js is a wrapper for the Hell Let Loose RCON API."
     }
   }
 }
