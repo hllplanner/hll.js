@@ -152,6 +152,7 @@ class SessionManager extends BaseManager {
    * Sets the sector layout.
    *
    * @param {Array<string>} sectors - The name sof the hard points. From left to right for horizontal maps and top to bottom for vertical maps.
+   * @returns {Promise<void>}
    */
   async setSectorLayout(sectors) {
     const response = await this.client.send({
