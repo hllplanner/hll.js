@@ -22,6 +22,32 @@ describe("SessionManager", () => {
     client.disconnect();
   });
 
+  describe("addMapRotation", () => {
+    it("should add a map at the given index.", async () => {
+      const mapsBefore = await client.session.fetchMapRotation();
+
+      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
+      await client.session.addMapToRotation(mapToAdd, 0);
+
+      const mapsAfter = await client.session.fetchMapRotation();
+
+      expect(mapsAfter[0].id).toBe(mapToAdd);
+    });
+  });
+
+  describe("addMapToSequence", () => {
+    it("should add a map at the given index.", async () => {
+      const mapsBefore = await client.session.fetchMapSequence();
+
+      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
+      await client.session.addMapToSequence(mapToAdd, 0);
+
+      const mapsAfter = await client.session.fetchMapSequence();
+
+      expect(mapsAfter[0].id).toBe(`/Game/Maps/${mapToAdd}`);
+    });
+  });
+
   describe("fetch", () => {
     it("should fetch a Session object.", async () => {
       const response = await client.session.fetch();
@@ -48,29 +74,23 @@ describe("SessionManager", () => {
     });
   });
 
-  describe("addMapRotation", () => {
-    it("should add a map at the given index.", async () => {
-      const mapsBefore = await client.session.fetchMapRotation();
+  describe("moveMapInSequence", () => {
+    it("should move a map in the sequence.", async () => {
+      let currentSequence = await client.session.fetchMapSequence();
 
-      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
-      await client.session.addMapToRotation(mapToAdd, 0);
+      // Ensure there are at least 2 maps
+      for (let i = currentSequence.length; i < 2; i++) {
+        const maps = ["carentan_warfare", "driel_warfare"];
+        await client.session.addMapToSequence(maps[i], currentSequence.length + i);
+      }
 
-      const mapsAfter = await client.session.fetchMapRotation();
+      const mapSequenceBefore = await client.session.fetchMapSequence();
 
-      expect(mapsAfter[0].id).toBe(mapToAdd);
-    });
-  });
+      await client.session.moveMapInSequence(0, 1);
 
-  describe("addMapToSequence", () => {
-    it("should add a map at the given index.", async () => {
-      const mapsBefore = await client.session.fetchMapSequence();
+      const mapSequenceAfter = await client.session.fetchMapSequence();
 
-      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
-      await client.session.addMapToSequence(mapToAdd, 0);
-
-      const mapsAfter = await client.session.fetchMapSequence();
-
-      expect(mapsAfter[0].id).toBe(`/Game/Maps/${mapToAdd}`);
+      expect(mapSequenceBefore[0].id === mapSequenceAfter[1].id).toBe(true);
     });
   });
 

@@ -57,7 +57,7 @@ class SessionManager extends BaseManager {
    * Adds a map to the rotation at a given index.
    *
    * @param {string} mapId
-   * @param {number} index
+   * @param {number} [index]
    * @returns {Promise<void>}
    */
   async addMapToRotation(mapId, index) {
@@ -78,7 +78,7 @@ class SessionManager extends BaseManager {
    * Adds a map to the sequence at a given index.
    *
    * @param {string} mapId
-   * @param {number} index
+   * @param {number} [index]
    * @returns {Promise<void>}
    */
   async addMapToSequence(mapId, index) {
@@ -159,6 +159,34 @@ class SessionManager extends BaseManager {
       timeOfDay: m.timeOfDay,
       position: m.position
     }));
+  }
+
+  /**
+   * Moves a map in the sequence to a new index.
+   *
+   * @param currentIndex
+   * @param newIndex
+   * @returns {Promise<void>}
+   */
+  async moveMapInSequence(currentIndex, newIndex) {
+    this._validateParameter(currentIndex, "currentIndex", {
+      nonEmptyString: false,
+      integer: true
+    });
+    this._validateParameter(newIndex, "newIndex", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "MoveMapInSequence",
+      contentBody: {
+        CurrentIndex: currentIndex,
+        NewIndex: newIndex
+      }
+    });
+
+    this._validateResponse(response);
   }
 
   /**
