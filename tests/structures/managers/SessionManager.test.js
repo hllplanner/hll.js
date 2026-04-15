@@ -1,6 +1,6 @@
 // Not all methods can be tested as they require players in the server.
 // setMap and setSectorLayout could be tested but may disrupt other testing.
-// Untested methods: setMap, setSectorLayout
+// Untested methods: setMap, setSectorLayout, setMapWeatherToggle
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });

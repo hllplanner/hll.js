@@ -234,6 +234,31 @@ class SessionManager extends BaseManager {
   }
 
   /**
+   * Enables/Disables dynamic weather for a map.
+   *
+   * @param mapId
+   * @param enable
+   * @returns {Promise<void>}
+   */
+  async setDynamicWeather(mapId, enable) {
+    this._validateParameter(mapId, "mapId");
+    this._validateParameter(enable, "enable", {
+      nonEmptyString: false,
+      boolean: true
+    });
+
+    const response = await this.client.send({
+      name: "SetMapWeatherToggle",
+      contentBody: {
+        MapId: mapId,
+        Enable: enable
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Sets the map for the session.
    *
    * @param {string} mapId
