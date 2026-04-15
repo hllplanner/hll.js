@@ -1,5 +1,5 @@
 // Not all methods can be tested as they require active players or disrupt the server.
-// Untested methods: setMap, setSectorLayout
+// Untested methods: setMap, setSectorLayout, setWelcomeMessage
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });
@@ -35,6 +35,25 @@ describe("SessionManager", () => {
       const response = await client.server.fetchChangelist();
 
       expect(typeof response).toBe("string");
+    });
+  });
+
+  // TODO: This command is broken server-side. Dont skip this test case once its fixed.
+  describe.skip("setMaxQueuedPlayers", () => {
+    it("should set the max queue count.", async () => {
+      const sessionBefore = await client.session.fetch();
+      const countBefore = sessionBefore.maxQueueCount;
+
+      const desiredCountAfter = (countBefore % 6) + 1;
+      await client.server.setMaxQueuedPlayers(desiredCountAfter);
+
+      const sessionAfter = await client.session.fetch();
+      const actualCountAfter = sessionAfter.maxQueueCount;
+
+      expect(actualCountAfter).toBe(desiredCountAfter);
+
+      // Cleanup
+      await client.server.setMaxQueuedPlayers(countBefore);
     });
   });
 });

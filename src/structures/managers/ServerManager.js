@@ -20,6 +20,21 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches the server changelist number.
+   *
+   * @returns {Promise<string>}
+   */
+  async fetchChangelist() {
+    const response = await this.client.send({
+      name: "GetServerChangelist"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.changelist;
+  }
+
+  /**
    * Fetches the server configuration.
    *
    * @returns {Promise<ServerConfiguration>}
@@ -38,18 +53,42 @@ class ServerManager extends BaseManager {
   }
 
   /**
-   * Fetches the server changelist number.
+   * Set the welcome message for the server.
    *
-   * @returns {Promise<string>}
+   * @param {string} [message]
+   * @returns {Promise<void>}
    */
-  async fetchChangelist() {
+  async setWelcomeMessage(message) {
     const response = await this.client.send({
-      name: "GetServerChangelist"
+      name: "SetWelcomeMessage",
+      contentBody: {
+        Message: message
+      }
     });
 
     this._validateResponse(response);
+  }
 
-    return response.contentBody.changelist;
+  /**
+   * Sets the maximum queue count.
+   *
+   * @param {number} count - Between 1 and 6
+   * @returns {Promise<void>}
+   */
+  async setMaxQueuedPlayers(count) {
+    this._validateParameter(count, "count", {
+      nonEmptyString: false,
+      positiveInteger: true
+    });
+
+    const response = await this.client.send({
+      name: "SetMaxQueuedPlayers",
+      contentBody: {
+        MaxQueuedPlayers: count
+      }
+    });
+
+    this._validateResponse(response);
   }
 }
 
