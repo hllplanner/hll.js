@@ -56,4 +56,22 @@ describe("SessionManager", () => {
       await client.server.setMaxQueuedPlayers(countBefore);
     });
   });
+
+  describe("setVipSlotCount", () => {
+    it("should set the max vip slot count.", async () => {
+      const sessionBefore = await client.session.fetch();
+      const countBefore = sessionBefore.maxVipQueueCount;
+
+      const desiredCountAfter = (countBefore % 6) + 1;
+      await client.server.setVipSlotCount(desiredCountAfter);
+
+      const sessionAfter = await client.session.fetch();
+      const actualCountAfter = sessionAfter.maxVipQueueCount;
+
+      expect(actualCountAfter).toBe(desiredCountAfter);
+
+      // Cleanup
+      await client.server.setVipSlotCount(countBefore);
+    });
+  });
 });

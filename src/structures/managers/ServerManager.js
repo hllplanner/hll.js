@@ -53,23 +53,6 @@ class ServerManager extends BaseManager {
   }
 
   /**
-   * Set the welcome message for the server.
-   *
-   * @param {string} [message]
-   * @returns {Promise<void>}
-   */
-  async setWelcomeMessage(message) {
-    const response = await this.client.send({
-      name: "SetWelcomeMessage",
-      contentBody: {
-        Message: message
-      }
-    });
-
-    this._validateResponse(response);
-  }
-
-  /**
    * Sets the maximum queue count.
    *
    * @param {number} count - Between 1 and 6
@@ -85,6 +68,45 @@ class ServerManager extends BaseManager {
       name: "SetMaxQueuedPlayers",
       contentBody: {
         MaxQueuedPlayers: count
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Sets the VIP slot count.
+   *
+   * @param {number} count
+   * @returns {Promise<void>}
+   */
+  async setVipSlotCount(count) {
+    this._validateParameter(count, "count", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetVipSlotCount",
+      contentBody: {
+        VipSlotCount: count
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Sets the welcome message for the server.
+   *
+   * @param {string} [message]
+   * @returns {Promise<void>}
+   */
+  async setWelcomeMessage(message) {
+    const response = await this.client.send({
+      name: "SetWelcomeMessage",
+      contentBody: {
+        Message: message
       }
     });
 
