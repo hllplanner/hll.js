@@ -82,7 +82,7 @@ class RCONClient extends EventEmitter {
    * Sends an RCON message.
    *
    * @param {Object} options - The message options.
-   * @param {string} [options.name] - Optional name of the command.
+   * @param {string} options.name - Name of the command.
    * @param {Object} [options.contentBody] - The main content of the message.
    * @returns {Promise<ResponseMessage>}
    */
