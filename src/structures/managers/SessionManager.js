@@ -44,7 +44,7 @@ class SessionManager extends BaseManager {
     const response = await this.client.send({
       name: "GetServerInformation",
       contentBody: {
-        Name: "Session"
+        Name: "session"
       }
     });
 

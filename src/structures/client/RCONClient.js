@@ -3,6 +3,7 @@ const { EventEmitter } = require("node:events");
 const MapManager = require("../managers/MapManager");
 const PlayerManager = require("../managers/PlayerManager");
 const PoolManager = require("../network/PoolManager");
+const ServerManager = require("../managers/ServerManager");
 const SessionManager = require("../managers/SessionManager");
 
 /**
@@ -33,6 +34,9 @@ class RCONClient extends EventEmitter {
   /** @type {SessionManager} */
   session;
 
+  /** @type {ServerManager} */
+  server;
+
   /**
    * @param {Object} options - The connection parameters.
    * @param {string} [options.host] - RCON server host.
@@ -46,9 +50,10 @@ class RCONClient extends EventEmitter {
     this.port = port;
     this.password = password;
 
-    this.players = new PlayerManager(this);
-    this.session = new SessionManager(this);
     this.maps = new MapManager(this);
+    this.players = new PlayerManager(this);
+    this.server = new ServerManager(this);
+    this.session = new SessionManager(this);
   }
 
   /**
