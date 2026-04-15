@@ -31,7 +31,7 @@ describe("SessionManager", () => {
   });
 
   describe("fetchMapRotation", () => {
-    it("should fetch an array of MapRotationEntry.", async () => {
+    it("should fetch an array of MapRotationEntry objects.", async () => {
       const response = await client.session.fetchMapRotation();
 
       expect(Array.isArray(response)).toBe(true);
@@ -39,8 +39,17 @@ describe("SessionManager", () => {
     });
   });
 
+  describe("fetchMapSequence", () => {
+    it("should fetch an array of MapSequenceEntry objects.", async () => {
+      const response = await client.session.fetchMapSequence();
+
+      expect(Array.isArray(response)).toBe(true);
+      expect(response[0]).toHaveProperty("id");
+    });
+  });
+
   describe("addMapRotation", () => {
-    it("should add a map at a given index.", async () => {
+    it("should add a map at the given index.", async () => {
       const mapsBefore = await client.session.fetchMapRotation();
 
       const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
@@ -52,6 +61,19 @@ describe("SessionManager", () => {
     });
   });
 
+  describe("addMapToSequence", () => {
+    it("should add a map at the given index.", async () => {
+      const mapsBefore = await client.session.fetchMapSequence();
+
+      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
+      await client.session.addMapToSequence(mapToAdd, 0);
+
+      const mapsAfter = await client.session.fetchMapSequence();
+
+      expect(mapsAfter[0].id).toBe(`/Game/Maps/${mapToAdd}`);
+    });
+  });
+
   describe("removeMapFromRotation", () => {
     it("removes a map at a given index.", async () => {
       const mapsBefore = await client.session.fetchMapRotation();
@@ -59,6 +81,18 @@ describe("SessionManager", () => {
       await client.session.removeMapFromRotation(0);
 
       const mapsAfter = await client.session.fetchMapRotation();
+
+      expect(mapsBefore[0] !== mapsAfter[0]).toBe(true);
+    });
+  });
+
+  describe("removeMapFromSequence", () => {
+    it("removes a map at a given index.", async () => {
+      const mapsBefore = await client.session.fetchMapSequence();
+
+      await client.session.removeMapFromSequence(0);
+
+      const mapsAfter = await client.session.fetchMapSequence();
 
       expect(mapsBefore[0] !== mapsAfter[0]).toBe(true);
     });

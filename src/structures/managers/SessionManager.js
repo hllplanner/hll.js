@@ -32,6 +32,15 @@ const BaseManager = require("./BaseManager.js");
  */
 
 /**
+ * @typedef {Object} MapSequenceEntry
+ * @property {string} name
+ * @property {string} gameMode
+ * @property {string} timeOfDay
+ * @property {string} id - File path of the map
+ * @property {number} position
+ */
+
+/**
  * Handles all functions for the active game.
  */
 class SessionManager extends BaseManager {
@@ -56,6 +65,27 @@ class SessionManager extends BaseManager {
 
     const response = await this.client.send({
       name: "AddMapToRotation",
+      contentBody: {
+        MapName: mapId,
+        Index: index
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Adds a map to the sequence at a given index.
+   *
+   * @param {string} mapId
+   * @param {number} index
+   * @returns {Promise<void>}
+   */
+  async addMapToSequence(mapId, index) {
+    this._validateParameter(mapId, "mapId");
+
+    const response = await this.client.send({
+      name: "AddMapToSequence",
       contentBody: {
         MapName: mapId,
         Index: index
@@ -92,7 +122,31 @@ class SessionManager extends BaseManager {
     const response = await this.client.send({
       name: "GetServerInformation",
       contentBody: {
-        Name: "Maprotation"
+        Name: "maprotation"
+      }
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.mAPS.map(m => ({
+      id: m.iD,
+      name: m.name,
+      gameMode: m.gameMode,
+      timeOfDay: m.timeOfDay,
+      position: m.position
+    }));
+  }
+
+  /**
+   * Fetches the maps in the sequence.
+   *
+   * @returns {Promise<Array<MapSequenceEntry>>}
+   */
+  async fetchMapSequence() {
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "mapsequence"
       }
     });
 
@@ -121,6 +175,28 @@ class SessionManager extends BaseManager {
 
     const response = await this.client.send({
       name: "RemoveMapFromRotation",
+      contentBody: {
+        Index: index
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes a map from the sequence at a given index.
+   *
+   * @param {number} index
+   * @returns {Promise<void>}
+   */
+  async removeMapFromSequence(index) {
+    this._validateParameter(index, "index", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "RemoveMapFromSequence",
       contentBody: {
         Index: index
       }
