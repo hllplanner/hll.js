@@ -36,6 +36,25 @@ class SessionManager extends BaseManager {
   }
 
   /**
+   * Broadcasts a message to all players.
+   *
+   * @param {string} message
+   * @returns {Promise<void>}
+   */
+  async broadcast(message) {
+    this._validateResponse(message, "message");
+
+    const response = await this.client.send({
+      name: "ServerBroadcast",
+      contentBody: {
+        Message: message
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Fetches the current session state.
    *
    * @returns {Promise<Session>}
