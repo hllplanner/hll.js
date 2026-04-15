@@ -1,6 +1,5 @@
-// Not all methods can be tested as they require players in the server.
-// setMap and setSectorLayout could be tested but may disrupt other testing.
-// Untested methods: setMap, setSectorLayout, setDynamicWeather, setSequenceShuffle
+// Not all methods can be tested as they require active players or disrupt the server.
+// Untested methods: setMap, setSectorLayout
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });
@@ -22,99 +21,14 @@ describe("SessionManager", () => {
     client.disconnect();
   });
 
-  describe("addMapRotation", () => {
-    it("should add a map at the given index.", async () => {
-      const mapsBefore = await client.session.fetchMapRotation();
-
-      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
-      await client.session.addMapToRotation(mapToAdd, 0);
-
-      const mapsAfter = await client.session.fetchMapRotation();
-
-      expect(mapsAfter[0].id).toBe(mapToAdd);
-    });
-  });
-
-  describe("addMapToSequence", () => {
-    it("should add a map at the given index.", async () => {
-      const mapsBefore = await client.session.fetchMapSequence();
-
-      const mapToAdd = mapsBefore[0] === "carentan_warfare" ? "driel_warfare" : "carentan_warfare";
-      await client.session.addMapToSequence(mapToAdd, 0);
-
-      const mapsAfter = await client.session.fetchMapSequence();
-
-      expect(mapsAfter[0].id).toBe(`/Game/Maps/${mapToAdd}`);
-    });
-  });
-
   describe("fetch", () => {
-    it("should fetch a Session object.", async () => {
+    it("should fetch a Session object representing the live game state.", async () => {
       const response = await client.session.fetch();
 
+      // Ensure the payload parsed correctly into standard camelCase properties
       expect(response).toHaveProperty("serverName");
-    });
-  });
-
-  describe("fetchMapRotation", () => {
-    it("should fetch an array of MapRotationEntry objects.", async () => {
-      const response = await client.session.fetchMapRotation();
-
-      expect(Array.isArray(response)).toBe(true);
-      expect(response[0]).toHaveProperty("id");
-    });
-  });
-
-  describe("fetchMapSequence", () => {
-    it("should fetch an array of MapSequenceEntry objects.", async () => {
-      const response = await client.session.fetchMapSequence();
-
-      expect(Array.isArray(response)).toBe(true);
-      expect(response[0]).toHaveProperty("id");
-    });
-  });
-
-  describe("moveMapInSequence", () => {
-    it("should move a map in the sequence.", async () => {
-      let currentSequence = await client.session.fetchMapSequence();
-
-      // Ensure there are at least 2 maps
-      for (let i = currentSequence.length; i < 2; i++) {
-        const maps = ["carentan_warfare", "driel_warfare"];
-        await client.session.addMapToSequence(maps[i], currentSequence.length + i);
-      }
-
-      const mapSequenceBefore = await client.session.fetchMapSequence();
-
-      await client.session.moveMapInSequence(0, 1);
-
-      const mapSequenceAfter = await client.session.fetchMapSequence();
-
-      expect(mapSequenceBefore[0].id === mapSequenceAfter[1].id).toBe(true);
-    });
-  });
-
-  describe("removeMapFromRotation", () => {
-    it("removes a map at a given index.", async () => {
-      const mapsBefore = await client.session.fetchMapRotation();
-
-      await client.session.removeMapFromRotation(0);
-
-      const mapsAfter = await client.session.fetchMapRotation();
-
-      expect(mapsBefore[0] !== mapsAfter[0]).toBe(true);
-    });
-  });
-
-  describe("removeMapFromSequence", () => {
-    it("removes a map at a given index.", async () => {
-      const mapsBefore = await client.session.fetchMapSequence();
-
-      await client.session.removeMapFromSequence(0);
-
-      const mapsAfter = await client.session.fetchMapSequence();
-
-      expect(mapsBefore[0] !== mapsAfter[0]).toBe(true);
+      expect(response).toHaveProperty("mapName");
+      expect(typeof response.playerCount).toBe("number");
     });
   });
 });

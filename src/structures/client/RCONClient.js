@@ -1,6 +1,8 @@
 const { EventEmitter } = require("node:events");
-const PoolManager = require("../network/PoolManager");
+
+const MapManager = require("../managers/MapManager");
 const PlayerManager = require("../managers/PlayerManager");
+const PoolManager = require("../network/PoolManager");
 const SessionManager = require("../managers/SessionManager");
 
 /**
@@ -21,6 +23,9 @@ class RCONClient extends EventEmitter {
 
   /** @type {string} */
   password;
+
+  /** @type {MapManager} */
+  maps;
 
   /** @type {PlayerManager} */
   players;
@@ -43,6 +48,7 @@ class RCONClient extends EventEmitter {
 
     this.players = new PlayerManager(this);
     this.session = new SessionManager(this);
+    this.maps = new MapManager(this);
   }
 
   /**
