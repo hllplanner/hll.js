@@ -248,7 +248,7 @@ class SessionManager extends BaseManager {
     });
 
     const response = await this.client.send({
-      name: "SetMapWeatherToggle",
+      name: "SetDynamicWeatherEnabled",
       contentBody: {
         MapId: mapId,
         Enable: enable
