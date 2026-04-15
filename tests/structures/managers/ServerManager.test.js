@@ -29,4 +29,12 @@ describe("SessionManager", () => {
       expect(response).toHaveProperty("buildNumber");
     });
   });
+
+  describe("fetchChangelist", () => {
+    it("should fetch the server changelist.", async () => {
+      const response = await client.server.fetchChangelist();
+
+      expect(typeof response).toBe("string");
+    });
+  });
 });

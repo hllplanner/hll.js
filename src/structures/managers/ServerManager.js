@@ -36,6 +36,21 @@ class ServerManager extends BaseManager {
 
     return response.contentBody;
   }
+
+  /**
+   * Fetches the server changelist number.
+   *
+   * @returns {Promise<string>}
+   */
+  async fetchChangelist() {
+    const response = await this.client.send({
+      name: "GetServerChangelist"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.changelist;
+  }
 }
 
 module.exports = ServerManager;
