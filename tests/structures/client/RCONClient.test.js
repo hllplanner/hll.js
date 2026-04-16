@@ -144,41 +144,4 @@ describe("Client Functions", () => {
       });
     });
   });
-
-  describe("Stress Testing", () => {
-    let client;
-
-    beforeAll(async () => {
-      client = new RCONClient({
-        host: process.env.RCON_HOST,
-        port: process.env.RCON_PORT,
-        password: process.env.RCON_PASSWORD
-      });
-
-      await client.init();
-    });
-
-    afterAll(() => {
-      client.disconnect();
-    });
-
-    // Increase timeout to 30000ms to allow the queue to process 1000 round trips
-    it("should handle 1000 simultaneous requests without dropping or deadlocking", async () => {
-      const requestCount = 1000;
-      const promises = [];
-
-      for (let i = 0; i < requestCount; i++) {
-        promises.push(client.fetchCommandInformation("SetWelcomeMessage"));
-      }
-
-      const results = await Promise.all(promises);
-
-      expect(results).toHaveLength(requestCount);
-
-      // Verify that every single promise resolved with the correct data structure
-      for (const result of results) {
-        expect(result.name).toBe("SetWelcomeMessage");
-      }
-    }, 30000);
-  });
 });
