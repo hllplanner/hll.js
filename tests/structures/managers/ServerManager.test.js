@@ -100,7 +100,7 @@ describe("SessionManager", () => {
   });
 
   describe("fetchHighPingThreshold", () => {
-    it("should fetch the high ping threshold", async () => {
+    it("should fetch the high ping threshold.", async () => {
       const threshold = await client.server.fetchHighPingThreshold();
 
       expect(typeof threshold).toBe("number");
@@ -120,6 +120,30 @@ describe("SessionManager", () => {
 
       // Cleanup
       await client.server.setHighPingThreshold(thresholdBefore);
+    });
+  });
+
+  describe("fetchTeamSwitchCooldown", () => {
+    it("should fetch the team switch cooldown.", async () => {
+      const cooldown = await client.server.fetchTeamSwitchCooldown();
+
+      expect(typeof cooldown).toBe("number");
+    });
+  });
+
+  describe("setTeamSwitchCooldown", () => {
+    it("should set the team switch cooldown.", async () => {
+      const cooldownBefore = await client.server.fetchTeamSwitchCooldown();
+
+      const desiredNewCooldown = cooldownBefore + 1;
+      await client.server.setTeamSwitchCooldown(desiredNewCooldown);
+
+      const cooldownAfter = await client.server.fetchTeamSwitchCooldown();
+
+      expect(cooldownAfter).toBe(desiredNewCooldown);
+
+      // Cleanup
+      await client.server.setTeamSwitchCooldown(cooldownBefore);
     });
   });
 });

@@ -68,8 +68,6 @@ class ServerManager extends BaseManager {
 
     this._validateResponse(response);
 
-
-
     return response.contentBody.highPingThresholdMs;
   }
 
@@ -86,6 +84,21 @@ class ServerManager extends BaseManager {
     this._validateResponse(response);
 
     return response.contentBody.idleTimeoutMinutes;
+  }
+
+  /**
+   * Fetches the team switch cooldown in minutes.
+   *
+   * @returns {Promise<number>}
+   */
+  async fetchTeamSwitchCooldown() {
+    const response = await this.client.send({
+      name: "GetTeamSwitchCooldown"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.teamSwitchTimer;
   }
 
   /**
@@ -147,6 +160,28 @@ class ServerManager extends BaseManager {
       name: "SetMaxQueuedPlayers",
       contentBody: {
         MaxQueuedPlayers: count
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Set the team switch cooldown.
+   *
+   * @param {number} cooldown - Cooldown in minutes.
+   * @returns {Promise<void>}
+   */
+  async setTeamSwitchCooldown(cooldown) {
+    this._validateParameter(cooldown, "cooldown", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetTeamSwitchCooldown",
+      contentBody: {
+        TeamSwitchTimer: cooldown
       }
     });
 
