@@ -109,39 +109,76 @@ describe("Client Functions", () => {
       }, 10000);
     });
   });
-});
 
-describe("RCON Commands", () => {
-  let client;
+  describe("RCON Commands", () => {
+    let client;
 
-  beforeAll(async () => {
-    client = new RCONClient({
-      host: process.env.RCON_HOST,
-      port: process.env.RCON_PORT,
-      password: process.env.RCON_PASSWORD
+    beforeAll(async () => {
+      client = new RCONClient({
+        host: process.env.RCON_HOST,
+        port: process.env.RCON_PORT,
+        password: process.env.RCON_PASSWORD
+      });
+
+      await client.init();
     });
 
-    await client.init();
-  });
+    afterAll(() => {
+      // Destroy all active sockets so the Jest process can exit cleanly
+      client.disconnect();
+    });
 
-  afterAll(() => {
-    // Destroy all active sockets so the Jest process can exit cleanly
-    client.disconnect();
-  });
+    describe("fetchRCONCommands", () => {
+      it("should fetch a list of RCON commands", async () => {
+        const commands = await client.fetchRCONCommands();
 
-  describe("fetchRCONCommands", () => {
-    it("should fetch a list of RCON commands", async () => {
-      const commands = await client.fetchRCONCommands();
+        expect(commands[0]).toHaveProperty("friendlyName");
+      });
+    });
 
-      expect(commands[0]).toHaveProperty("friendlyName");
+    describe("fetchCommandInformation", () => {
+      it("should fetch information about a specific RCON command.", async () => {
+        const info = await client.fetchCommandInformation("SetWelcomeMessage");
+
+        expect(info.name).toBe("SetWelcomeMessage");
+      });
     });
   });
 
-  describe("fetchCommandInformation", () => {
-    it("should fetch information about a specific RCON command.", async () => {
-      const info = await client.fetchCommandInformation("SetWelcomeMessage");
+  describe("Stress Testing", () => {
+    let client;
 
-      expect(info.name).toBe("SetWelcomeMessage");
+    beforeAll(async () => {
+      client = new RCONClient({
+        host: process.env.RCON_HOST,
+        port: process.env.RCON_PORT,
+        password: process.env.RCON_PASSWORD
+      });
+
+      await client.init();
     });
+
+    afterAll(() => {
+      client.disconnect();
+    });
+
+    // Increase timeout to 30000ms to allow the queue to process 1000 round trips
+    it("should handle 1000 simultaneous requests without dropping or deadlocking", async () => {
+      const requestCount = 1000;
+      const promises = [];
+
+      for (let i = 0; i < requestCount; i++) {
+        promises.push(client.fetchCommandInformation("SetWelcomeMessage"));
+      }
+
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(requestCount);
+
+      // Verify that every single promise resolved with the correct data structure
+      for (const result of results) {
+        expect(result.name).toBe("SetWelcomeMessage");
+      }
+    }, 30000);
   });
 });
