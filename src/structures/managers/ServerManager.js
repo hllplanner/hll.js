@@ -24,6 +24,27 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Adds a word to the banned words list.
+   *
+   * @param {Array<string>} words
+   * @returns {Promise<void>}
+   */
+  async addBannedWords(words) {
+    for (const word of words) {
+      this._validateParameter(word, "word");
+    }
+
+    const response = await this.client.send({
+      name: "AddBannedWords",
+      contentBody: {
+        BannedWords: words.join(",")
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Fetches the auto balance on/off status.
    *
    * @returns {Promise<boolean>}
@@ -51,6 +72,24 @@ class ServerManager extends BaseManager {
     this._validateResponse(response);
 
     return response.contentBody.autoBalanceThreshold;
+  }
+
+  /**
+   * Fetches all banned words.
+   *
+   * @returns {Promise<Array<string>>}
+   */
+  async fetchBannedWordsList() {
+    const response = await this.client.send({
+      name: "GetServerInformation",
+      contentBody: {
+        Name: "bannedwords"
+      }
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.bannedWords;
   }
 
   /**
@@ -159,6 +198,27 @@ class ServerManager extends BaseManager {
     this._validateResponse(response);
 
     return response.contentBody.voteThresholdList;
+  }
+
+  /**
+   * Removes banned words from the server ban list.
+   *
+   * @param {Array<string>} words
+   * @returns {Promise<void>}
+   */
+  async removeBannedWords(words) {
+    for (const word of words) {
+      this._validateParameter(word, "word");
+    }
+
+    const response = await this.client.send({
+      name: "RemovebannedWords",
+      contentBody: {
+        BannedWords: words.join(",")
+      }
+    });
+
+    this._validateResponse(response);
   }
 
   /**

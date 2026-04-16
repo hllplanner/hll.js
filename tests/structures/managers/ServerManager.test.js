@@ -285,4 +285,57 @@ describe("SessionManager", () => {
       await client.server.setVoteKickThresholds(thresholdsBefore);
     });
   });
+
+  describe("Banned Words Management", () => {
+    const testWords = ["hlljs_test_word_1", "hlljs_test_word_2"];
+
+    afterAll(async () => {
+      // Ensure test words are removed
+      try {
+        await client.server.removeBannedWords(testWords);
+      } catch (error) {
+      }
+    });
+
+    describe("fetchBannedWordsList", () => {
+      it("should return an array of banned words.", async () => {
+        const bannedWords = await client.server.fetchBannedWordsList();
+
+        expect(Array.isArray(bannedWords)).toBe(true);
+      });
+    });
+
+    describe("addBannedWords", () => {
+      it("should add new words to the banned words list.", async () => {
+        await client.server.addBannedWords(testWords);
+
+        const bannedWordsAfter = await client.server.fetchBannedWordsList();
+
+        expect(bannedWordsAfter).toEqual(expect.arrayContaining(testWords));
+      });
+
+      it("should throw a validation error if a word is invalid.", async () => {
+        const invalidWords = ["valid_word", 123];
+
+        await expect(client.server.addBannedWords(invalidWords))
+          .rejects
+          .toThrow();
+      });
+    });
+
+    describe("removeBannedWords", () => {
+      it("should remove words from the banned words list.", async () => {
+        // Ensure the words exist before attempting removal
+        await client.server.addBannedWords(testWords);
+
+        await client.server.removeBannedWords(testWords);
+
+        const bannedWordsAfter = await client.server.fetchBannedWordsList();
+
+        for (const word of testWords) {
+          expect(bannedWordsAfter).not.toContain(word);
+        }
+      });
+    });
+  });
 });
