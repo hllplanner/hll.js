@@ -57,6 +57,81 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches the high ping threshold in milliseconds.
+   *
+   * @returns {Promise<number>}
+   */
+  async fetchHighPingThreshold() {
+    const response = await this.client.send({
+      name: "GetHighPingThreshold"
+    });
+
+    this._validateResponse(response);
+
+
+
+    return response.contentBody.highPingThresholdMs;
+  }
+
+  /**
+   * Fetches the idle kick duration in minutes.
+   *
+   * @returns {Promise<number>}
+   */
+  async fetchIdleKickDuration() {
+    const response = await this.client.send({
+      name: "GetKickIdleDuration"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.idleTimeoutMinutes;
+  }
+
+  /**
+   * Sets high ping threshold.
+   *
+   * @param {number} threshold - Threshold in milliseconds
+   * @returns {Promise<void>}
+   */
+  async setHighPingThreshold(threshold) {
+    this._validateParameter(threshold, "threshold", {
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetHighPingThreshold",
+      contentBody: {
+        HighPingThresholdMs: threshold
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Sets the idle kick duration.
+   *
+   * @param {number} duration - The duration in minutes.
+   * @returns {Promise<void>}
+   */
+  async setIdleKickDuration(duration) {
+    this._validateParameter(duration, "duration", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetIdleKickDuration",
+      contentBody: {
+        IdleTimeoutMinutes: duration
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Sets the maximum queue count.
    *
    * @param {number} count - Between 1 and 6
@@ -115,41 +190,6 @@ class ServerManager extends BaseManager {
     });
 
     this._validateResponse(response);
-  }
-
-  /**
-   * Sets the idle kick duration.
-   *
-   * @param {number} duration - The duration in minutes.
-   * @returns {Promise<void>}
-   */
-  async setIdleKickDuration(duration) {
-    this._validateParameter(duration, "duration", {
-      nonEmptyString: false,
-      integer: true
-    });
-
-    const response = await this.client.send({
-      name: "SetIdleKickDuration",
-      contentBody: {
-        IdleTimeoutMinutes: duration
-      }
-    });
-
-    this._validateResponse(response);
-  }
-
-  /**
-   * Fetches the idle kick duration in minutes.
-   *
-   * @returns {Promise<number>}
-   */
-  async fetchIdleKickDuration() {
-    const response = await this.client.send({
-      name: "GetKickIdleDuration"
-    });
-
-    return response.contentBody.idleTimeoutMinutes;
   }
 }
 

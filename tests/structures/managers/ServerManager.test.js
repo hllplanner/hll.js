@@ -98,4 +98,28 @@ describe("SessionManager", () => {
       await client.server.setIdleKickDuration(idleKickDurationBefore);
     });
   });
+
+  describe("fetchHighPingThreshold", () => {
+    it("should fetch the high ping threshold", async () => {
+      const threshold = await client.server.fetchHighPingThreshold();
+
+      expect(typeof threshold).toBe("number");
+    });
+  });
+
+  describe("setHighPingThreshold", () => {
+    it("should set the high ping threshold.", async () => {
+      const thresholdBefore = await client.server.fetchHighPingThreshold();
+
+      const desiredNewThreshold = thresholdBefore + 1;
+      await client.server.setHighPingThreshold(desiredNewThreshold);
+
+      const thresholdAfter = await client.server.fetchHighPingThreshold();
+
+      expect(thresholdAfter).toBe(desiredNewThreshold);
+
+      // Cleanup
+      await client.server.setHighPingThreshold(thresholdBefore);
+    });
+  });
 });
