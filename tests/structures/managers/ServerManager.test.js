@@ -74,4 +74,28 @@ describe("SessionManager", () => {
       await client.server.setVipSlotCount(countBefore);
     });
   });
+
+  describe("fetchIdleKickDuration", () => {
+    it("should fetch the idle kick duration.", async () => {
+      const idleKickDuration = await client.server.fetchIdleKickDuration();
+
+      expect(typeof idleKickDuration).toBe("number");
+    });
+  });
+
+  describe("setIdleKickDuration", () => {
+    it("should set the idle kick duration.", async () => {
+      const idleKickDurationBefore = await client.server.fetchIdleKickDuration();
+
+      const desiredNewDuration = idleKickDurationBefore + 1;
+      await client.server.setIdleKickDuration(desiredNewDuration);
+
+      const idleKickDurationAfter = await client.server.fetchIdleKickDuration();
+
+      expect(idleKickDurationAfter).toBe(desiredNewDuration);
+
+      // Cleanup
+      await client.server.setIdleKickDuration(idleKickDurationBefore);
+    });
+  });
 });

@@ -9,6 +9,10 @@ const BaseManager = require("../managers/BaseManager");
  * @property {boolean} passwordProtected
  */
 
+/**
+ * Manages server configurations and actions.
+ * @extends BaseManager
+ */
 class ServerManager extends BaseManager {
   /** @type {RCONClient} */
   client;
@@ -111,6 +115,41 @@ class ServerManager extends BaseManager {
     });
 
     this._validateResponse(response);
+  }
+
+  /**
+   * Sets the idle kick duration.
+   *
+   * @param {number} duration - The duration in minutes.
+   * @returns {Promise<void>}
+   */
+  async setIdleKickDuration(duration) {
+    this._validateParameter(duration, "duration", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetIdleKickDuration",
+      contentBody: {
+        IdleTimeoutMinutes: duration
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Fetches the idle kick duration in minutes.
+   *
+   * @returns {Promise<number>}
+   */
+  async fetchIdleKickDuration() {
+    const response = await this.client.send({
+      name: "GetKickIdleDuration"
+    });
+
+    return response.contentBody.idleTimeoutMinutes;
   }
 }
 
