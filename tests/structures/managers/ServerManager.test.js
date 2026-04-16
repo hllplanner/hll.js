@@ -194,4 +194,28 @@ describe("SessionManager", () => {
       await client.server.setAutoBalanceThreshold(thresholdBefore);
     });
   });
+
+  describe("fetchVoteKickEnabled", () => {
+    it("should fetch the vote kick status.", async () => {
+      const enabled = await client.server.fetchVoteKickEnabled();
+
+      expect(typeof enabled).toBe("boolean");
+    });
+  });
+
+  describe("setVoteKickEnabled", () => {
+    it("should update the vote kick enabled state.", async () => {
+      const stateBefore = await client.server.fetchVoteKickEnabled();
+
+      const desiredNewState = !stateBefore;
+      await client.server.setVoteKickEnabled(desiredNewState);
+
+      const stateAfter = await client.server.fetchVoteKickEnabled();
+
+      expect(desiredNewState).toBe(stateAfter);
+
+      // Cleanup
+      await client.server.setVoteKickEnabled(stateBefore);
+    });
+  });
 });

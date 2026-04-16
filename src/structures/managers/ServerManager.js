@@ -132,6 +132,21 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches if vote kick is enabled.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async fetchVoteKickEnabled() {
+    const response = await this.client.send({
+      name: "GetVoteKickEnabled"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.enable;
+  }
+
+  /**
    * Enables/Disables auto balance.
    *
    * @param {boolean} enable
@@ -278,6 +293,28 @@ class ServerManager extends BaseManager {
       name: "SetVipSlotCount",
       contentBody: {
         VipSlotCount: count
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Enables/disables vote kick.
+   *
+   * @param {boolean} enable
+   * @returns {Promise<void>}
+   */
+  async setVoteKickEnabled(enable) {
+    this._validateParameter(enable, "enable", {
+      nonEmptyString: false,
+      boolean: true
+    });
+
+    const response = await this.client.send({
+      name: "SetVoteKickEnabled",
+      contentBody: {
+        Enable: enable
       }
     });
 
