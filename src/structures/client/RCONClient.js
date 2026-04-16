@@ -89,6 +89,24 @@ class RCONClient extends EventEmitter {
   async send(options) {
     return this.pool.send({ name: options.name, contentBody: options.contentBody });
   }
+
+  /**
+   * Retrieves list of RCON commands.
+   *
+   * @returns {Promise<Object|string>}
+   */
+  async fetchRCONCommands() {
+    const response = await this.send({
+      name: "GetDisplayableCommands"
+    });
+
+    // Just use players _validateResponse, client shouldnt extend BaseManager.
+    this.players._validateResponse(response);
+
+    return response.contentBody.entries.map(c => ({
+      id: c.iD, friendlyName: c.friendlyName, isClientSupported: c.isClientSupported
+    }));
+  }
 }
 
 module.exports = RCONClient;
