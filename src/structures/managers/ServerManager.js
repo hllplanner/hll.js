@@ -39,6 +39,21 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches the auto balance threshold.
+   *
+   * @returns {Promise<number>}
+   */
+  async fetchAutoBalanceThreshold() {
+    const response = await this.client.send({
+      name: "GetAutoBalanceThreshold"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.autoBalanceThreshold;
+  }
+
+  /**
    * Fetches the server changelist number.
    *
    * @returns {Promise<string>}
@@ -132,6 +147,28 @@ class ServerManager extends BaseManager {
       name: "SetAutoBalanceEnabled",
       contentBody: {
         Enable: enable
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Set the threshold for auto balance to take effect.
+   *
+   * @param {number} threshold - Player difference
+   * @returns {Promise<void>}
+   */
+  async setAutoBalanceThreshold(threshold) {
+    this._validateParameter(threshold, "threshold", {
+      nonEmptyString: false,
+      integer: true
+    });
+
+    const response = await this.client.send({
+      name: "SetAutoBalanceThreshold",
+      contentBody: {
+        AutoBalanceThreshold: threshold
       }
     });
 

@@ -170,4 +170,28 @@ describe("SessionManager", () => {
       await client.server.setAutoBalanceEnabled(stateBefore);
     });
   });
+
+  describe("fetchAutoBalanceThreshold", () => {
+    it("should fetch the auto balance threshold.", async () => {
+      const threshold = await client.server.fetchAutoBalanceThreshold();
+
+      expect(typeof threshold).toBe("number");
+    });
+  });
+
+  describe("setAutoBalanceThreshold", () => {
+    it("should set the auto balance threshold.", async () => {
+      const thresholdBefore = await client.server.fetchAutoBalanceThreshold();
+
+      const desiredNewThreshold = thresholdBefore + 1;
+      await client.server.setAutoBalanceThreshold(desiredNewThreshold);
+
+      const thresholdAfter = await client.server.fetchAutoBalanceThreshold();
+
+      expect(thresholdAfter).toBe(desiredNewThreshold);
+
+      // Cleanup
+      await client.server.setAutoBalanceThreshold(thresholdBefore);
+    });
+  });
 });
