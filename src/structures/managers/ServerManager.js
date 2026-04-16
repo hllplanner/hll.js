@@ -222,6 +222,52 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Removes a custom timer for a gamemode.
+   *
+   * @param {"Warfare"|"Offensive"|"Skirmish"} gamemode
+   * @returns {Promise<void>}
+   */
+  async removeMatchTimer(gamemode) {
+    this._validateParameter(gamemode, "gamemode");
+
+    if (!["Warfare", "Offensive", "Skirmish"].includes(gamemode)) {
+      throw new Error(`Validation Error: ${gamemode} is not a valid gamemode.`);
+    }
+
+    const response = await this.client.send({
+      name: "RemoveMatchTimer",
+      contentBody: {
+        GameMode: gamemode
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Removes a custom warmup timer for a gamemode.
+   *
+   * @param {"Warfare"|"Offensive"|"Skirmish"} gamemode
+   * @returns {Promise<void>}
+   */
+  async removeWarmupTimer(gamemode) {
+    this._validateParameter(gamemode, "gamemode");
+
+    if (!["Warfare", "Offensive", "Skirmish"].includes(gamemode)) {
+      throw new Error(`Validation Error: ${gamemode} is not a valid gamemode.`);
+    }
+
+    const response = await this.client.send({
+      name: "RemoveWarmupTimer",
+      contentBody: {
+        GameMode: gamemode
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Resets vote kick thresholds to an empty list.
    *
    * @returns {Promise<void>}
@@ -315,6 +361,54 @@ class ServerManager extends BaseManager {
       name: "SetIdleKickDuration",
       contentBody: {
         IdleTimeoutMinutes: duration
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Set the match timer for gamemodes.
+   *
+   * @param {"Warfare"|"Offensive"|"Skirmish"} gamemode
+   * @param {number} duration - Duration in minutes
+   * @returns {Promise<void>}
+   */
+  async setMatchTimer(gamemode, duration) {
+    this._validateParameter(gamemode, "gamemode");
+    this._validateParameter(duration, "duration", {
+      nonEmptyString: false,
+      positiveInteger: true
+    });
+
+    switch (gamemode) {
+      case "Warfare": {
+        if (duration < 30 || duration > 180) {
+          throw new Error(`Validation error: ${gamemode} duration must be between 30 and 180 minutes. Got ${duration}`);
+        }
+
+        break;
+      }
+
+      // Both skirmish and offensive may be between 10 and 60 minutes.
+      case "Skirmish":
+      case "Offensive": {
+        if (duration < 30 || duration > 180) {
+          throw new Error(`Validation error: ${gamemode} duration must be between 10 and 60 minutes. Got ${duration}`);
+        }
+
+        break;
+      }
+
+      default:
+        throw new Error(`Validation error, ${gamemode} is not a valid gamemode.`);
+    }
+
+    const response = await this.client.send({
+      name: "SetMatchTimer",
+      contentBody: {
+        GameMode: gamemode,
+        MatchLength: duration
       }
     });
 
@@ -433,6 +527,39 @@ class ServerManager extends BaseManager {
       name: "SetVoteKickThreshold",
       contentBody: {
         ThresholdValue: thresholds.flatMap(t => [t.playerCount, t.voteThreshold]).join(",")
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Set the match timer for gamemodes.
+   *
+   * @param {"Warfare"|"Offensive"|"Skirmish"} gamemode
+   * @param {number} length - Length in minutes between 1 and 10
+   * @returns {Promise<void>}
+   */
+  async setWarmupTimer(gamemode, length) {
+    this._validateParameter(gamemode, "gamemode");
+    this._validateParameter(length, "length", {
+      nonEmptyString: false,
+      positiveInteger: true
+    });
+
+    if (!["Warfare", "Offensive", "Skirmish"].includes(gamemode)) {
+      throw new Error(`Validation Error: ${gamemode} is not a valid gamemode.`);
+    }
+
+    if (length < 1 || length > 10) {
+      throw new Error(`Validation Error: Length must be between 1 and 10, got ${length}`);
+    }
+
+    const response = await this.client.send({
+      name: "SetWarmupTimer",
+      contentBody: {
+        GameMode: gamemode,
+        WarmupLength: length
       }
     });
 

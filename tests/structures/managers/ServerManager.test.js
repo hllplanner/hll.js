@@ -1,5 +1,5 @@
-// Not all methods can be tested as they require active players or disrupt the server.
-// Untested methods: setMap, setSectorLayout, setWelcomeMessage
+// Not all methods can be tested as they require active players, may disrupt the server, or have no method of verification.
+// Untested methods: setMap, setSectorLayout, setWelcomeMessage, setMatchTimer, removeMatchTimer, setWarmupTimer, removeWarmupTimer
 
 const { RCONClient } = require("../../../src");
 require("dotenv").config({ quiet: true });
