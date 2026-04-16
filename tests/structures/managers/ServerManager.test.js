@@ -146,4 +146,28 @@ describe("SessionManager", () => {
       await client.server.setTeamSwitchCooldown(cooldownBefore);
     });
   });
+
+  describe("fetchAutoBalanceEnabled", () => {
+    it("should fetch the auto balance status.", async () => {
+      const enabled = await client.server.fetchAutoBalanceEnabled();
+
+      expect(typeof enabled).toBe("boolean");
+    });
+  });
+
+  describe("setAutoBalanceEnabled", () => {
+    it("should update the auto balance enabled state.", async () => {
+      const stateBefore = await client.server.fetchAutoBalanceEnabled();
+
+      const desiredNewState = !stateBefore;
+      await client.server.setAutoBalanceEnabled(desiredNewState);
+
+      const stateAfter = await client.server.fetchAutoBalanceEnabled();
+
+      expect(desiredNewState).toBe(stateAfter);
+
+      // Cleanup
+      await client.server.setAutoBalanceEnabled(stateBefore);
+    });
+  });
 });

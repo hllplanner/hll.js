@@ -24,6 +24,21 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches the auto balance on/off status.
+   *
+   * @returns {Promise<boolean>}
+   */
+  async fetchAutoBalanceEnabled() {
+    const response = await this.client.send({
+      name: "GetAutoBalanceEnabled"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.enable;
+  }
+
+  /**
    * Fetches the server changelist number.
    *
    * @returns {Promise<string>}
@@ -99,6 +114,28 @@ class ServerManager extends BaseManager {
     this._validateResponse(response);
 
     return response.contentBody.teamSwitchTimer;
+  }
+
+  /**
+   * Enables/Disables auto balance.
+   *
+   * @param {boolean} enable
+   * @returns {Promise<void>}
+   */
+  async setAutoBalanceEnabled(enable) {
+    this._validateParameter(enable, "enable", {
+      nonEmptyString: false,
+      boolean: true
+    });
+
+    const response = await this.client.send({
+      name: "SetAutoBalanceEnabled",
+      contentBody: {
+        Enable: enable
+      }
+    });
+
+    this._validateResponse(response);
   }
 
   /**
