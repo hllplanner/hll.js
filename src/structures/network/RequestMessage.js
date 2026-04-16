@@ -22,7 +22,7 @@ class RequestMessage {
    * @param {RCONConnection} connection - The connection this message belongs to.
    * @param {Object} options - The message configuration.
    * @param {string} options.name - The RCON command name.
-   * @param {string} [options.contentBody] - The RCON command body if applicable.
+   * @param {string|Object} [options.contentBody] - The RCON command body if applicable.
    * @param {number} options.id - Internal request id.
    */
   constructor(connection, options) {
@@ -30,8 +30,10 @@ class RequestMessage {
     this.name = options.name;
     this.id = options.id;
 
-    // ContentBody should be a json string for all commands excluding ServerConnect and Login
-    this.contentBody = ["ServerConnect", "Login"].includes(this.name) ? options.contentBody : JSON.stringify(options.contentBody || "{}");
+    // Stringify the payload if it is an object, otherwise keep it as a string
+    this.contentBody = typeof options.contentBody === 'object' && options.contentBody !== null
+      ? JSON.stringify(options.contentBody)
+      : options.contentBody;
   }
 
   /**

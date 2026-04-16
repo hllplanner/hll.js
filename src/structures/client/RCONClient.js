@@ -7,6 +7,23 @@ const ServerManager = require("../managers/ServerManager");
 const SessionManager = require("../managers/SessionManager");
 
 /**
+ * @typedef {Object} RconCommandDialogueParameter
+ * @property {string} type
+ * @property {string} name
+ * @property {string} id
+ * @property {string} displayMember
+ * @property {string} valueMember
+ */
+
+/**
+ * @typedef {Object} RCONCommandInformation
+ * @property {string} name
+ * @property {string} text
+ * @property {string} description
+ * @property {Array<RconCommandDialogueParameter>} dialogueParameters
+ */
+
+/**
  * Represents the RCON client, its connections, and managers.
  *
  * @class
@@ -106,6 +123,36 @@ class RCONClient extends EventEmitter {
     return response.contentBody.entries.map(c => ({
       id: c.iD, friendlyName: c.friendlyName, isClientSupported: c.isClientSupported
     }));
+  }
+
+  /**
+   * Gets information about a particular RCON command.
+   *
+   * @returns {Promise<RCONCommandInformation>}
+   */
+  async fetchCommandInformation(commandName) {
+    this.players._validateParameter(commandName, "commandName");
+
+    const response = await this.send({
+      name: "GetClientReferenceData",
+      contentBody: commandName
+    });
+
+    this.players._validateResponse(response);
+
+    const formatted = response.contentBody;
+
+    // Iterate through parameters to replace iD with id
+    if (formatted && Array.isArray(formatted.dialogueParameters)) {
+      formatted.dialogueParameters.forEach(param => {
+        if (param.iD !== undefined) {
+          param.id = param.iD;
+          delete param.iD;
+        }
+      });
+    }
+
+    return formatted;
   }
 }
 
