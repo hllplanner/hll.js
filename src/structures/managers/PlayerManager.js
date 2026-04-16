@@ -102,7 +102,7 @@ class PlayerManager extends BaseManager {
     this._validateParameter(playerId, "playerId");
 
     const response = await this.client.send({
-      name: "AddVIP",
+      name: "AddVip",
       contentBody: {
         PlayerId: playerId,
         Comment: comment
@@ -424,7 +424,7 @@ class PlayerManager extends BaseManager {
     this._validateParameter(playerId, "playerId");
 
     const response = await this.client.send({
-      name: "RemoveVIP",
+      name: "RemoveVip",
       contentBody: {
         PlayerId: playerId
       }
