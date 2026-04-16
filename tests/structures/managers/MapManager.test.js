@@ -103,11 +103,11 @@ describe("MapManager", () => {
 
       const mapSequenceBefore = await client.maps.fetchMapSequence();
 
-      await client.maps.moveMapInSequence(0, 1);
+      await client.maps.moveMapInSequence(1, 0);
 
       const mapSequenceAfter = await client.maps.fetchMapSequence();
 
-      expect(mapSequenceBefore[0].id).toBe(mapSequenceAfter[1].id);
+      expect(mapSequenceAfter[0].id).toBe(mapSequenceBefore[1].id);
     });
   });
 

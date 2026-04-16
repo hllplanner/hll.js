@@ -218,4 +218,71 @@ describe("SessionManager", () => {
       await client.server.setVoteKickEnabled(stateBefore);
     });
   });
+
+  describe("fetchVoteKickThresholds", () => {
+    it("should fetch vote kick thresholds.", async () => {
+      const thresholds = await client.server.fetchVoteKickThresholds();
+
+      expect(Array.isArray(thresholds)).toBe(true);
+    });
+  });
+
+  describe("setVoteKickThresholds", () => {
+    it("should set new vote kick thresholds.", async () => {
+      const votesForFive = Math.floor(Math.random() * 4) + 1;
+      const votesForTen = Math.floor(Math.random() * 9) + 1;
+      const votesForZero = Math.floor(Math.random() * 5) + 1;
+
+      const newThresholds = [
+        { playerCount: 0, voteThreshold: votesForZero },
+        { playerCount: 5, voteThreshold: votesForFive },
+        { playerCount: 10, voteThreshold: votesForTen }
+      ];
+
+      await client.server.setVoteKickThresholds(newThresholds);
+
+      const thresholds = await client.server.fetchVoteKickThresholds();
+
+      expect(Array.isArray(thresholds)).toBe(true);
+      expect(thresholds).toHaveLength(3);
+      expect(thresholds).toEqual(newThresholds);
+    });
+
+    it("should throw an error if the 0-player threshold is missing.", async () => {
+      const invalidThresholds = [
+        { playerCount: 5, voteThreshold: 3 },
+        { playerCount: 10, voteThreshold: 5 }
+      ];
+
+      await expect(client.server.setVoteKickThresholds(invalidThresholds))
+        .rejects
+        .toThrow("Validation Error: Must have a threshold for 0 players.");
+    });
+
+    it("should throw an error if votes needed are greater than or equal to the player count.", async () => {
+      const invalidThresholds = [
+        { playerCount: 0, voteThreshold: 1 },
+        { playerCount: 5, voteThreshold: 3 },
+        { playerCount: 10, voteThreshold: 12 }
+      ];
+
+      await expect(client.server.setVoteKickThresholds(invalidThresholds))
+        .rejects
+        .toThrow("Validation Error: Votes needed (12) must be less than player count (10).");
+    });
+  });
+
+  describe("resetVoteKickThresholds", () => {
+    it("should reset all vote kick thresholds.", async () => {
+      const thresholdsBefore = await client.server.fetchVoteKickThresholds();
+
+      await client.server.resetVoteKickThresholds();
+      const thresholdsAfter = await client.server.fetchVoteKickThresholds();
+
+      expect(thresholdsAfter).toEqual([]);
+
+      // Cleanup
+      await client.server.setVoteKickThresholds(thresholdsBefore);
+    });
+  });
 });

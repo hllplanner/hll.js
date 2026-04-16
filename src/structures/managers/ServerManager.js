@@ -147,6 +147,34 @@ class ServerManager extends BaseManager {
   }
 
   /**
+   * Fetches the vote kick thresholds.
+   *
+   * @returns {Promise<void>}
+   */
+  async fetchVoteKickThresholds() {
+    const response = await this.client.send({
+      name: "GetVoteKickThreshold"
+    });
+
+    this._validateResponse(response);
+
+    return response.contentBody.voteThresholdList;
+  }
+
+  /**
+   * Resets vote kick thresholds to an empty list.
+   *
+   * @returns {Promise<void>}
+   */
+  async resetVoteKickThresholds() {
+    const response = await this.client.send({
+      name: "ResetVoteKickThreshold"
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
    * Enables/Disables auto balance.
    *
    * @param {boolean} enable
@@ -315,6 +343,36 @@ class ServerManager extends BaseManager {
       name: "SetVoteKickEnabled",
       contentBody: {
         Enable: enable
+      }
+    });
+
+    this._validateResponse(response);
+  }
+
+  /**
+   * Sets the vote kick thresholds.
+   *
+   * @param {Array<{playerCount: number, voteThreshold: number}>} thresholds - Array of threshold objects.
+   * @returns {Promise<void>}
+   */
+  async setVoteKickThresholds(thresholds) {
+    // Sort ascending
+    thresholds = thresholds.sort((a, b) => a.playerCount - b.playerCount);
+
+    if (thresholds[0].playerCount !== 0) {
+      throw new Error(`Validation Error: Must have a threshold for 0 players.`);
+    }
+
+    for (const { playerCount, voteThreshold } of thresholds) {
+      if (playerCount !== 0 && voteThreshold >= playerCount) {
+        throw new Error(`Validation Error: Votes needed (${voteThreshold}) must be less than player count (${playerCount}).`);
+      }
+    }
+
+    const response = await this.client.send({
+      name: "SetVoteKickThreshold",
+      contentBody: {
+        ThresholdValue: thresholds.flatMap(t => [t.playerCount, t.voteThreshold]).join(",")
       }
     });
 
