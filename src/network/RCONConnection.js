@@ -108,7 +108,7 @@ class RCONConnection extends EventEmitter {
    * @returns {Promise<ResponseMessage>} The resolved response from the server.
    * @throws {Error} when no response is received within timeout.
    */
-  async send(message, options) {
+  async send(message, options = {}) {
     const encrypt = options.encrypt !== false;
     const timeout = options.timeout || 10000;
 
