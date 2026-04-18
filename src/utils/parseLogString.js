@@ -45,8 +45,6 @@ const parseLogString = (string) => {
         fullReason,
         customReason
       };
-
-      break;
     }
 
     case "CHAT[Team]": {
