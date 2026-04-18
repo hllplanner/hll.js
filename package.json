@@ -1,5 +1,5 @@
 {
-  "name": "hll.js",
+  "name": "@finbar/hll.js",
   "version": "1.0.0",
   "main": "./src/index.js",
   "repository": "https://github.com/hllplanner/hll.js",
@@ -19,5 +19,12 @@
     "generate-docs": "jsdoc -c jsdoc.json --verbose",
     "test": "jest"
   },
-  "dependencies": {}
+  "files": [
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

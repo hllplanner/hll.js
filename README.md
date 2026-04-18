@@ -5,8 +5,8 @@ A comprehensive Node.js RCON client for Hell Let Loose.
 ### Installation
 
 ```
-yarn add hll.js
-npm i hll.js
+yarn add @finbar/hll.js
+npm i @finbar/hll.js
 ```
 
 ### Features
