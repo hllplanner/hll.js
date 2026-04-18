@@ -111,20 +111,22 @@ describe("MapManager", () => {
     });
   });
 
-  describe("removeMapFromSequence", () => {
-    it("should remove a map at a given index.", async () => {
-      let mapsBefore = await client.maps.fetchMapSequence();
+  describe("removeMapFromRotation", () => {
+    it("should actually remove the map from the server state.", async () => {
+      await client.maps.addMapToRotation("carentan_warfare", 0);
 
-      if (mapsBefore.length === 0) {
-        await client.maps.addMapToSequence("carentan_warfare", 0);
-        mapsBefore = await client.maps.fetchMapSequence();
-      }
+      const mapsBefore = await client.maps.fetchMapRotation();
+      const targetMapId = mapsBefore[0].id;
 
-      await client.maps.removeMapFromSequence(0);
+      await client.maps.removeMapFromRotation(0);
 
-      const mapsAfter = await client.maps.fetchMapSequence();
+      const mapsAfter = await client.maps.fetchMapRotation();
 
       expect(mapsAfter.length).toBe(mapsBefore.length - 1);
+
+      if (mapsAfter.length > 0) {
+        expect(mapsAfter[0].id).not.toBe(targetMapId);
+      }
     });
   });
 });
