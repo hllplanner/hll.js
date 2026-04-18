@@ -102,15 +102,33 @@ class RCONConnection extends EventEmitter {
    * @param {Object} message - The message payload.
    * @param {string} message.name - The command or action name.
    * @param {Object|string} [message.contentBody] - The body content of the message.
-   * @param {Object} [options={ encrypt: true }] - Transmission configuration.
+   * @param {Object} [options] - Transmission configuration.
    * @param {boolean} [options.encrypt=true] - Whether to send the buffer encrypted.
+   * @param {number} [options.timeout=10000] - Message timeout.
    * @returns {Promise<ResponseMessage>} The resolved response from the server.
+   * @throws {Error} when no response is received within timeout.
    */
-  async send(message, options = { encrypt: true }) {
-    return new Promise((resolve) => {
+  async send(message, options) {
+    const encrypt = options.encrypt !== false;
+    const timeout = options.timeout || 10000;
+
+    return new Promise((resolve, reject) => {
       const executeSend = () => {
         this.transmitMessageIndex += 1;
         const currentId = this.transmitMessageIndex;
+
+        // Set timeout timer
+        const timer = setTimeout(() => {
+          if (this.requestCache[currentId]) {
+            delete this.requestCache[currentId];
+            this.messagesInAir -= 1;
+
+            // Allow the next message in the queue to proceed
+            this.#processQueue();
+
+            reject(new Error(`RCON Request Timeout: ${message.name} (ID: ${currentId})`));
+          }
+        }, timeout);
 
         const requestMessage = new RequestMessage(this, {
           id: currentId,
@@ -118,15 +136,21 @@ class RCONConnection extends EventEmitter {
           contentBody: message.contentBody
         });
 
-        const messageBuffer = options.encrypt ? requestMessage.toBuffer() : requestMessage.toUnencryptedBuffer();
+        const messageBuffer = encrypt
+          ? requestMessage.toBuffer()
+          : requestMessage.toUnencryptedBuffer();
 
         this.socket.write(messageBuffer);
         this.messagesInAir += 1;
 
-        this.requestCache[this.transmitMessageIndex] = {
-          resolve,
+        this.requestCache[currentId] = {
+          // Wrap resolve to clear the timer when data arrives
+          resolve: (response) => {
+            clearTimeout(timer);
+            resolve(response);
+          },
           requestMessage,
-          encrypted: options.encrypt
+          encrypted: encrypt
         };
       };
 
