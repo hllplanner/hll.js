@@ -1,1 +1,1 @@
-exports.RCONClient = require("./structures/client/RCONClient");
+exports.RCONClient = require("./client/RCONClient");

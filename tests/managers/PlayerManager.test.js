@@ -1,7 +1,7 @@
 // Not all methods can be tested as they require players in the server.
 // Untested methods: kick, message, disbandPlatoon, punish, removePlayerFromPlatoon, switchTeams
 
-const { RCONClient } = require("../../../src");
+const { RCONClient } = require("../../src");
 require("dotenv").config({ quiet: true });
 
 describe("PlayerManager", () => {

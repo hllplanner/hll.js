@@ -1,4 +1,4 @@
-const BaseManager = require("../managers/BaseManager");
+const BaseManager = require("./BaseManager");
 
 /**
  * @typedef {Object} ServerConfiguration

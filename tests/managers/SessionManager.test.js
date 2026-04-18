@@ -1,7 +1,7 @@
 // Not all methods can be tested as they require active players or disrupt the server.
 // Untested methods: setMap, setSectorLayout, broadcast
 
-const { RCONClient } = require("../../../src");
+const { RCONClient } = require("../../src");
 require("dotenv").config({ quiet: true });
 
 describe("SessionManager", () => {

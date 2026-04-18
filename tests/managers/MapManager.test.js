@@ -1,6 +1,6 @@
 // Untested methods: setDynamicWeather, setSequenceShuffle
 
-const { RCONClient } = require("../../../src");
+const { RCONClient } = require("../../src");
 require("dotenv").config({ quiet: true });
 
 describe("MapManager", () => {
