@@ -21,19 +21,8 @@ const parseLogString = (string) => {
   if (!headerRegExp.test(string))
     throw new Error(`Invalid log header: ${string}`);
 
-  let header, relativeTime, relativeTimeFormat, timestamp, logType;
-  try {
-    header = headerRegExp.exec(string);
-    [relativeTime, relativeTimeFormat, timestamp, logType] = header.slice(1, 5);
-  } catch {
-    console.error(`Error parsing log: ${string}`);
-    return {
-      type: "parseError",
-      string
-    };
-  }
-
-  timestamp = Number(timestamp);
+  const [relativeTime, relativeTimeFormat, rawTimestamp, logType] = headerRegExp.exec(string).slice(1, 5);
+  const timestamp = Number(rawTimestamp);
 
   switch (logType) {
     case "BAN": {
@@ -72,8 +61,6 @@ const parseLogString = (string) => {
         playerFaction,
         message: msg
       };
-
-      break;
     }
 
     case "CHAT[Unit]": {
@@ -88,8 +75,6 @@ const parseLogString = (string) => {
         playerId,
         message: msg
       };
-
-      break;
     }
 
     case "CONNECTED": {
@@ -102,8 +87,6 @@ const parseLogString = (string) => {
         playerId,
         playerName
       };
-
-      break;
     }
 
     case "DISCONNECTED": {
@@ -116,8 +99,6 @@ const parseLogString = (string) => {
         playerId,
         playerName
       };
-
-      break;
     }
 
     case "KICK": {
@@ -130,8 +111,6 @@ const parseLogString = (string) => {
         playerName,
         reason
       };
-
-      break;
     }
 
     case "KILL": {
@@ -149,8 +128,6 @@ const parseLogString = (string) => {
         victimId,
         weapon
       };
-
-      break;
     }
 
     case "MATCH ENDED": {
@@ -164,8 +141,6 @@ const parseLogString = (string) => {
         alliesScore: Number(alliesScore),
         axisScore: Number(axisScore)
       };
-
-      break;
     }
 
     case "MATCH START": {
@@ -177,8 +152,6 @@ const parseLogString = (string) => {
         timestamp,
         mapName
       };
-
-      break;
     }
 
     case "MESSAGE": {
@@ -192,8 +165,6 @@ const parseLogString = (string) => {
         playerId,
         message: msg
       };
-
-      break;
     }
 
     // Admin camera
@@ -209,8 +180,6 @@ const parseLogString = (string) => {
         playerId,
         playerName
       };
-
-      break;
     }
 
     case "TEAMSWITCH": {
@@ -224,8 +193,6 @@ const parseLogString = (string) => {
         oldFaction,
         newFaction
       };
-
-      break;
     }
 
     case "TEAM KILL": {
@@ -243,8 +210,6 @@ const parseLogString = (string) => {
         victimId,
         weapon
       };
-
-      break;
     }
 
     case "VOTESYS": {
@@ -327,8 +292,6 @@ const parseLogString = (string) => {
           againstVotes: Number(againstVotes)
         };
       }
-
-      break;
     }
   }
 };
