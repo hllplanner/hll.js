@@ -4,7 +4,7 @@
  * @param {Buffer} xorKey - The XOR key.
  * @returns {Buffer} The transformed buffer.
  */
-module.exports = xor = (buffer, xorKey) => {
+const xor = (buffer, xorKey) => {
   const resultBuffer = Buffer.alloc(buffer.length);
 
   for (let i = 0; i < buffer.length; i++) {
@@ -13,3 +13,5 @@ module.exports = xor = (buffer, xorKey) => {
 
   return resultBuffer;
 };
+
+module.exports = xor;
