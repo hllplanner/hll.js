@@ -43,6 +43,9 @@ class RCONClient extends EventEmitter {
   /** @type {string} */
   password;
 
+  /** @type {string} */
+  connectionStatus;
+
   /** @type {LogManager} */
   logs;
 
@@ -70,6 +73,8 @@ class RCONClient extends EventEmitter {
     this.host = host;
     this.port = port;
     this.password = password;
+
+    this.connectionStatus = "disconnected";
 
     this.logs = new LogManager(this);
     this.maps = new MapManager(this);

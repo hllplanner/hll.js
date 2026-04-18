@@ -92,6 +92,7 @@ class PoolManager {
 
     if (this.connections.length > 0) {
       this.client.emit("ready");
+      this.client.connectionStatus = "ready";
     }
   }
 
