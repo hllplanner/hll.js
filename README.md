@@ -18,7 +18,7 @@ npm i @finbar/hll.js
 ### Get Started
 
 ```js
-const { RCONClient } = require("hll.js");
+const { RCONClient } = require("@finbar/hll.js");
 
 const client = new RCONClient({
   host: "123.123.123.123",
