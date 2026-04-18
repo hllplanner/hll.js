@@ -89,6 +89,10 @@ class PoolManager {
     for (let i = 0; i < this.connectionsCount; i++) {
       await this.#createConnection();
     }
+
+    if (this.connections.length > 0) {
+      this.client.emit("ready");
+    }
   }
 
   /**
