@@ -1,3 +1,4 @@
+const crypto = require("node:crypto");
 const BaseManager = require("./BaseManager");
 const parseLogString = require("../utils/parseLogString");
 
@@ -7,6 +8,12 @@ const parseLogString = require("../utils/parseLogString");
 class LogManager extends BaseManager {
   /** @type {RCONClient} */
   client;
+
+  /** @type {Set<string>} */
+  hashCache = new Set();
+
+  /** @type {number} */
+  maxCacheSize = 500; // Surely a sufficiently large limit.
 
   /**
    *
@@ -35,19 +42,38 @@ class LogManager extends BaseManager {
     }
   }
 
+  /**
+   * Requests logs from the server for internal library operations and log polling.
+   *
+   * @returns {Promise<void>}
+   */
   async #poll() {
     try {
+      // Ensure client is ready before attempting communication
       if (this.client.connectionStatus !== "ready") return;
 
       const backtrackSeconds = Math.floor(this.logPollingBacktrack / 1000);
       const logs = await this.fetch(backtrackSeconds);
 
       for (const log of logs) {
+        const hash = crypto
+          .createHash("md5")
+          .update(JSON.stringify(log))
+          .digest("hex");
+
+        // Ensure a log hasnt already been processed before using it for operations
+        if (this.hashCache.has(hash)) continue;
+
+        this.hashCache.add(hash);
         this.client.emit(log.type, log);
       }
 
+      // If hash cache exceeds max size delete the oldest values.
+      while (this.hashCache.size > this.maxCacheSize) {
+        const oldest = this.hashCache.values().next().value;
+        this.hashCache.delete(oldest);
+      }
     } catch (err) {
-      // Prevent the polling from dying entirely on a single network error
       console.error("Log polling error:", err.message);
     } finally {
       // Schedule the next poll only after the current one finishes
