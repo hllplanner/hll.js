@@ -61,7 +61,7 @@ class PlayerManager extends BaseManager {
       cachedPlayer._patch(data);
     } else {
       cachedPlayer = new Player(this.client, data, isPartial);
-      this.cache.set(cachedPlayer.iD, cachedPlayer);
+      this.cache.set(cachedPlayer.id, cachedPlayer);
     }
 
     return cachedPlayer;

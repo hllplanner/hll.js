@@ -96,6 +96,7 @@ class Player {
     if ("team" in data) this.team = data.team;
     if ("role" in data) this.role = data.role;
     if ("platoon" in data) this.platoon = data.platoon;
+    if ("loadout" in data) this.loadout = data.loadout;
 
     // Normalize the weird casing on cOMBAT while mapping the object
     if ("scoreData" in data && data.scoreData) {
