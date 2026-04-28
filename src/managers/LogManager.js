@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const BaseManager = require("./BaseManager");
 const parseLogString = require("../utils/parseLogString");
+const { safeRcon } = require("../index");
 
 /**
  * Handles log fetching, parsing, and storage.
@@ -53,7 +54,8 @@ class LogManager extends BaseManager {
       if (this.client.connectionStatus !== "ready") return;
 
       const backtrackSeconds = Math.floor(this.logPollingBacktrack / 1000);
-      const logs = await this.fetch(backtrackSeconds);
+      const logs = await safeRcon(this.fetch(backtrackSeconds), []);
+      if (logs.length <= 0) return;
 
       for (const log of logs) {
         const hash = crypto
