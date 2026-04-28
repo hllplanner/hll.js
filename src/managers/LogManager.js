@@ -1,7 +1,7 @@
 const crypto = require("node:crypto");
 const BaseManager = require("./BaseManager");
 const parseLogString = require("../utils/parseLogString");
-const { safeRcon } = require("../index");
+const safeRcon = require("../utils/safeRcon");
 
 /**
  * Handles log fetching, parsing, and storage.
