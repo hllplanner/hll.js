@@ -56,3 +56,15 @@ client.on("ready", async () => {
   await client.init();
 })();
 ```
+
+### Error Paradigm
+
+For many reasons, especially when polling logs, requests will be dropped by the server. It is suggested to wrap all requests with the `safeRcon` function exported by this library.
+
+```js
+const { safeRcon } = require("@finbar/hll.js");
+
+// Safely catch any errors from client.logs.fetch, if an error is encountered it will return an empty array.
+const logs = await safeRcon(client.logs.fetch(3600), []);
+if (logs.length <= 0) return; // Return if no logs were found
+```
