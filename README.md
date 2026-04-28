@@ -59,7 +59,10 @@ client.on("ready", async () => {
 
 ### Error Paradigm
 
-For many reasons, especially when polling logs, requests will be dropped by the server. It is suggested to wrap all requests with the `safeRcon` function exported by this library.
+For many reasons, especially when polling any data, requests may be dropped by the server. It is suggested to wrap all
+requests with the `safeRcon` function exported by this library.
+
+Log polling performed by the RCONClient class by default uses this function.
 
 ```js
 const { safeRcon } = require("@finbar/hll.js");
