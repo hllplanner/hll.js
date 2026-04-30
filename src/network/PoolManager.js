@@ -28,6 +28,30 @@ class PoolManager {
   }
 
   /**
+   * Dedicated loop to continuously attempt reconnection until successful.
+   * @private
+   */
+  async #reconnectSlot() {
+    let reconnected = false;
+    let attempt = 1;
+
+    while (!reconnected && !this.isDestroyed) {
+      // Wait 5 seconds between attempts
+      await new Promise((r) => setTimeout(r, 5000));
+
+      try {
+        console.log(`Auto-recovery attempt ${attempt}...`);
+        await this.#createConnection();
+        reconnected = true;
+        console.log("Auto-recovery successful. RCON connection restored.");
+      } catch (err) {
+        console.error(`Auto-recovery attempt ${attempt} failed:`, err.message);
+        attempt++;
+      }
+    }
+  }
+
+  /**
    * Creates a new RCON connection and adds it to the pool once ready.
    * @private
    * @returns {Promise<void>}
@@ -55,14 +79,8 @@ class PoolManager {
         }
 
         // The connection was previously healthy but dropped.
-        // Wait 5 seconds before attempting to connect.
-        await new Promise((r) => setTimeout(r, 5000));
-
-        // Attempt to replace the dead connection in the background.
-        // Catch the error here so a failed background reconnect doesn't crash the app.
-        this.#createConnection().catch((err) => {
-          console.error("Background reconnection attempt failed:", err.message);
-        });
+        console.warn("RCON connection dropped. Initiating auto-recovery...");
+        this.#reconnectSlot();
       });
 
       connection.once("ready", () => {
