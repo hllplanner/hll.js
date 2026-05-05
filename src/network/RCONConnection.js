@@ -195,12 +195,14 @@ class RCONConnection extends EventEmitter {
       const cachedRequest = this.requestCache[id];
       const responseMessage = new ResponseMessage(rawBuffer, cachedRequest);
 
-      this.#handleMessageInternal(responseMessage);
-      this.messagesInAir -= 1;
-
       if (cachedRequest) {
+        this.#handleMessageInternal(responseMessage);
+        this.messagesInAir -= 1;
+
         cachedRequest.resolve(responseMessage);
         delete this.requestCache[id];
+      } else {
+        console.warn(`Ghost Packet: Server responded to ${id} but the message already timed out.`)
       }
 
       // Check if the queue has pending messages and process them
