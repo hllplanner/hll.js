@@ -6,6 +6,7 @@ const RequestMessage = require("./RequestMessage");
 /**
  * @typedef {Object} RequestCacheItem
  * @property {Function} resolve - The promise resolve function.
+ * @property {Function} reject - The promise reject function.
  * @property {RequestMessage} requestMessage - The instantiated request message.
  * @property {boolean} encrypted - Whether the message was sent encrypted.
  */
@@ -25,33 +26,20 @@ class RCONConnection extends EventEmitter {
   /** @type {string|null} */
   authToken = null;
 
-  /** * Auto-increment for every sent message to assign a unique ID for each request.
-   * @type {number}
-   */
+  /** @type {number} */
   transmitMessageIndex = 0;
 
-  /** * Continuous buffer to hold incoming TCP data until full messages are formed.
-   * @type {Buffer}
-   */
+  /** @type {Buffer} */
   receiveBuffer = Buffer.alloc(0);
 
-  /** * Key-value map of active messages waiting for response.
-   * @type {Record<number, RequestCacheItem>}
-   */
+  /** @type {Record<number, RequestCacheItem>} */
   requestCache = {};
-
-  /** * Queue of pending send operations waiting for capacity.
-   * @type {Array<Function>}
-   */
-  messageQueue = [];
 
   /** @type {number} */
   messagesInAir = 0;
 
-  /** * Maximum allowed concurrent requests to prevent server throttling.
-   * @type {number}
-   */
-  maxMessagesInAir = 100;
+  /** @type {number} */
+  maxMessagesInAir = 15;
 
   /** @type {string} */
   host;
@@ -98,7 +86,6 @@ class RCONConnection extends EventEmitter {
 
   /**
    * Constructs and sends a RequestMessage to the RCON server.
-   * Enqueues the request if the maximum concurrent limit has been reached.
    * @param {Object} message - The message payload.
    * @param {string} message.name - The command or action name.
    * @param {Object|string} [message.contentBody] - The body content of the message.
@@ -106,59 +93,48 @@ class RCONConnection extends EventEmitter {
    * @param {boolean} [options.encrypt=true] - Whether to send the buffer encrypted.
    * @param {number} [options.timeout=10000] - Message timeout.
    * @returns {Promise<ResponseMessage>} The resolved response from the server.
-   * @throws {Error} when no response is received within timeout.
    */
   async send(message, options = {}) {
     const encrypt = options.encrypt !== false;
     const timeout = options.timeout || 10000;
 
     return new Promise((resolve, reject) => {
-      const executeSend = () => {
-        this.transmitMessageIndex += 1;
-        const currentId = this.transmitMessageIndex;
+      this.transmitMessageIndex += 1;
+      const currentId = this.transmitMessageIndex;
 
-        // Set timeout timer
-        const timer = setTimeout(() => {
-          if (this.requestCache[currentId]) {
-            delete this.requestCache[currentId];
-            this.messagesInAir -= 1;
+      const timer = setTimeout(() => {
+        if (this.requestCache[currentId]) {
+          delete this.requestCache[currentId];
+          this.messagesInAir -= 1;
+          reject(new Error(`RCON Request Timeout: ${message.name} (ID: ${currentId})`));
+        }
+      }, timeout);
 
-            // Allow the next message in the queue to proceed
-            this.#processQueue();
+      const requestMessage = new RequestMessage(this, {
+        id: currentId,
+        name: message.name,
+        contentBody: message.contentBody
+      });
 
-            reject(new Error(`RCON Request Timeout: ${message.name} (ID: ${currentId})`));
-          }
-        }, timeout);
+      const messageBuffer = encrypt
+        ? requestMessage.toBuffer()
+        : requestMessage.toUnencryptedBuffer();
 
-        const requestMessage = new RequestMessage(this, {
-          id: currentId,
-          name: message.name,
-          contentBody: message.contentBody
-        });
+      this.socket.write(messageBuffer);
+      this.messagesInAir += 1;
 
-        const messageBuffer = encrypt
-          ? requestMessage.toBuffer()
-          : requestMessage.toUnencryptedBuffer();
-
-        this.socket.write(messageBuffer);
-        this.messagesInAir += 1;
-
-        this.requestCache[currentId] = {
-          // Wrap resolve to clear the timer when data arrives
-          resolve: (response) => {
-            clearTimeout(timer);
-            resolve(response);
-          },
-          requestMessage,
-          encrypted: encrypt
-        };
+      this.requestCache[currentId] = {
+        resolve: (response) => {
+          clearTimeout(timer);
+          resolve(response);
+        },
+        reject: (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+        requestMessage,
+        encrypted: encrypt
       };
-
-      if (this.messagesInAir < this.maxMessagesInAir) {
-        executeSend();
-      } else {
-        this.messageQueue.push(executeSend);
-      }
     });
   }
 
@@ -166,7 +142,6 @@ class RCONConnection extends EventEmitter {
    * Appends incoming data to the receive buffer and triggers processing.
    * @private
    * @param {Buffer} data - The raw TCP chunk received from the socket.
-   * @returns {void}
    */
   #handlePacket(data) {
     this.receiveBuffer = Buffer.concat([this.receiveBuffer, data]);
@@ -176,11 +151,9 @@ class RCONConnection extends EventEmitter {
   /**
    * Processes the buffer, extracting messages as soon as their full content length is received.
    * @private
-   * @returns {void}
    */
   #processBuffer() {
     while (this.receiveBuffer.length >= 12) {
-
       const id = this.receiveBuffer.readUInt32LE(4);
       const contentLength = this.receiveBuffer.readUInt32LE(8);
       const totalMessageLength = 12 + contentLength;
@@ -202,23 +175,8 @@ class RCONConnection extends EventEmitter {
         cachedRequest.resolve(responseMessage);
         delete this.requestCache[id];
       } else {
-        console.warn(`Ghost Packet: Server responded to ${id} but the message already timed out.`)
+        console.warn(`Ghost Packet: Server responded to ${id} but the message already timed out.`);
       }
-
-      // Check if the queue has pending messages and process them
-      this.#processQueue();
-    }
-  }
-
-  /**
-   * Dispatches pending messages from the queue if there is available capacity.
-   * @private
-   * @returns {void}
-   */
-  #processQueue() {
-    while (this.messageQueue.length > 0 && this.messagesInAir < this.maxMessagesInAir) {
-      const nextSend = this.messageQueue.shift();
-      nextSend();
     }
   }
 
@@ -226,7 +184,6 @@ class RCONConnection extends EventEmitter {
    * Internal message parser for handling ServerConnect and authentication routines.
    * @private
    * @param {ResponseMessage} responseMessage - The fully parsed incoming response.
-   * @returns {Promise<void>}
    */
   async #handleMessageInternal(responseMessage) {
     switch (responseMessage.name) {
@@ -256,6 +213,22 @@ class RCONConnection extends EventEmitter {
         break;
       }
     }
+  }
+
+  /**
+   * Resolves all pending requests with an error.
+   * @param {string} error
+   */
+  flushPendingRequests(error) {
+    const dropError = new Error(error);
+
+    // Reject all active messages in the air
+    for (const id in this.requestCache) {
+      this.requestCache[id].reject(dropError);
+    }
+
+    this.requestCache = {};
+    this.messagesInAir = 0;
   }
 }
 

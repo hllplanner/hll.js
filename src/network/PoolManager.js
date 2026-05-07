@@ -17,6 +17,15 @@ class PoolManager {
   /** @type {boolean} */
   isDestroyed = false;
 
+  /** @type {Array<{}>} */
+  messageQueue = [];
+
+  /** @type {boolean} */
+  isProcessingQueue = false;
+
+  /** @type {number} */
+  dispatchDelayMs = 30;
+
   /**
    * @param {Object} options - The configuration options for the pool manager.
    * @param {RCONClient} options.client - The parent RCON client instance.
@@ -36,7 +45,7 @@ class PoolManager {
     let attempt = 1;
 
     while (!reconnected && !this.isDestroyed) {
-      // Wait 5 seconds between attempts
+      // Pause between connection attempts
       await new Promise((r) => setTimeout(r, 5000));
 
       try {
@@ -62,30 +71,30 @@ class PoolManager {
       let isReady = false;
 
       // Catch socket errors to prevent the Node.js process from crashing
-      // The 'close' event will automatically fire immediately after this, only need this listener to omit the unhandled exception.
       connection.socket.once("error", () => null);
 
       connection.socket.once("close", async () => {
-        // Always ensure the dead connection is removed from the active pool
+        connection.flushPendingRequests("Socket connection dropped.");
+
         this.connections = this.connections.filter((c) => c !== connection);
 
-        // Dont attempt to reestablish connection if client is destroyed.
         if (this.isDestroyed) return;
 
         if (!isReady) {
-          // The socket died before it ever connected. Reject to prevent infinite hanging.
           reject(new Error("Failed to establish initial RCON connection."));
           return;
         }
 
-        // The connection was previously healthy but dropped.
         console.warn("RCON connection dropped. Initiating auto-recovery...");
-        this.#reconnectSlot();
+        await this.#reconnectSlot();
       });
 
       connection.once("ready", () => {
         isReady = true;
         this.connections.push(connection);
+
+        // Resume processing the queue now that capacity is restored
+        this.#startQueueProcessor();
         resolve();
       });
 
@@ -128,30 +137,59 @@ class PoolManager {
   }
 
   /**
-   * Retrieves the optimal connection based on current message load.
+   * Processes the global queue with rate limiting and concurrency checks.
    * @private
-   * @returns {RCONConnection} The connection to use for the next message.
    */
-  #getOptimalConnection() {
-    const connectionsSorted = this.connections.sort((a, b) => a.messagesInAir - b.messagesInAir);
-    return connectionsSorted[0];
+  async #startQueueProcessor() {
+    // Prevent overlapping processor loops
+    if (this.isProcessingQueue) return;
+    this.isProcessingQueue = true;
+
+    while (this.messageQueue.length > 0 && !this.isDestroyed) {
+      const availableConnections = this.connections.filter(
+        (c) => c.messagesInAir < c.maxMessagesInAir
+      );
+
+      if (availableConnections.length === 0) {
+        // Yield briefly if pool is saturated or recovering
+        await new Promise((r) => setTimeout(r, 50));
+        continue;
+      }
+
+      availableConnections.sort((a, b) => a.messagesInAir - b.messagesInAir);
+      const optimalConnection = availableConnections[0];
+
+      const nextReq = this.messageQueue.shift();
+
+      // Dispatch without awaiting the response to maintain throughput
+      optimalConnection.send(nextReq.message)
+        .then(nextReq.resolve)
+        .catch(nextReq.reject);
+
+      // Enforce dispatch delay to protect game server tick rate
+      await new Promise((r) => setTimeout(r, this.dispatchDelayMs));
+    }
+
+    this.isProcessingQueue = false;
   }
 
   /**
-   * Sends an RCON message using the optimal connection from the pool.
+   * Queues an RCON message to be sent when capacity is available.
    * @param {Object} options - The message payload.
    * @param {string} options.name - Name of the command.
    * @param {Object} [options.contentBody] - The main content of the message.
    * @returns {Promise<ResponseMessage>} The response from the RCON server.
-   * @throws {Error} Throws if there are no available connections in the pool.
    */
   async send({ name, contentBody }) {
-    if (!this.connections.length) {
-      throw new Error("No connections available.");
-    }
+    return new Promise((resolve, reject) => {
+      this.messageQueue.push({
+        message: { name, contentBody },
+        resolve,
+        reject
+      });
 
-    const connection = this.#getOptimalConnection();
-    return connection.send({ name, contentBody });
+      this.#startQueueProcessor();
+    });
   }
 }
 
