@@ -50,6 +50,12 @@ class RCONConnection extends EventEmitter {
   /** @type {string} */
   password;
 
+  /** @type {number} */
+  consecutiveTimeouts = 0;
+
+  /** @type {number} */
+  maxConsecutiveTimeouts = 3;
+
   /**
    * @param {Object} options - The initialization options.
    * @param {RCONClient} options.client - The parent RCON client instance.
@@ -60,6 +66,8 @@ class RCONConnection extends EventEmitter {
     this.host = client.host;
     this.port = client.port;
     this.password = client.password;
+
+    this.socket.setKeepAlive(true, 10000);
 
     this.socket.on("ready", async () => {
       const serverConnectResponse = await this.send(
@@ -105,8 +113,17 @@ class RCONConnection extends EventEmitter {
       const timer = setTimeout(() => {
         if (this.requestCache[currentId]) {
           delete this.requestCache[currentId];
+
           this.messagesInAir -= 1;
+          this.consecutiveTimeouts += 1;
+
           reject(new Error(`RCON Request Timeout: ${message.name} (ID: ${currentId})`));
+
+          // Socket is unresponsive, close the connection.
+          if (this.consecutiveTimeouts >= this.maxConsecutiveTimeouts) {
+            console.warn(`[ZOMBIE CONNECTION] ${this.consecutiveTimeouts} timeouts in a row. Forcing socket kill...`);
+            this.socket.destroy();
+          }
         }
       }, timeout);
 
@@ -170,7 +187,9 @@ class RCONConnection extends EventEmitter {
 
       if (cachedRequest) {
         this.#handleMessageInternal(responseMessage);
+
         this.messagesInAir -= 1;
+        this.consecutiveTimeouts = 0; // Reset killswtich for dead connections
 
         cachedRequest.resolve(responseMessage);
         delete this.requestCache[id];
