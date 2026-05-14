@@ -191,7 +191,22 @@ class RCONConnection extends EventEmitter {
         this.messagesInAir -= 1;
         this.consecutiveTimeouts = 0; // Reset killswtich for dead connections
 
-        cachedRequest.resolve(responseMessage);
+        const isDesynced = responseMessage.statusCode === 400 ||
+          (typeof responseMessage.contentBody === "string" &&
+            (responseMessage.contentBody.includes("400") || responseMessage.contentBody.toLowerCase().includes("malformed")));
+
+        if (isDesynced) {
+          console.error("[XOR DESYNC] Received 400 Malformed response. Destroying socket to force recovery...");
+
+          // Instantly sever the connection
+          this.socket.destroy();
+
+          // Reject the current promise so the application knows it failed
+          cachedRequest.reject(new Error(responseMessage.contentBody || "RCON Error (400): Malformed request"));
+        } else {
+          cachedRequest.resolve(responseMessage);
+        }
+
         delete this.requestCache[id];
       } else {
         console.warn(`Ghost Packet: Server responded to ${id} but the message already timed out.`);
