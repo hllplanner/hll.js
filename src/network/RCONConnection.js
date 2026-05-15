@@ -170,7 +170,40 @@ class RCONConnection extends EventEmitter {
    * @private
    */
   #processBuffer() {
-    while (this.receiveBuffer.length >= 12) {
+    // Need at least 4 bytes to check the magic header
+    while (this.receiveBuffer.length >= 4) {
+
+      const magicHeader = this.receiveBuffer.readUInt32LE(0);
+
+      // If the header is invalid, the TCP stream is misaligned.
+      if (magicHeader !== 0xDE450508) {
+        console.warn(`[TCP DESYNC] Invalid Magic Header detected. Attempting to realign buffer...`);
+
+        // Search the buffer for the next valid magic header sequence.
+        const magicBytes = Buffer.from([0x08, 0x05, 0x45, 0xDE]);
+        // Start at index 1 to skip the current corrupted bytes.
+        const nextValidIndex = this.receiveBuffer.indexOf(magicBytes, 1);
+
+        if (nextValidIndex === -1) {
+          // The rest of the current buffer is garbage, and we haven't received
+          // the start of the next packet yet. Clear it to prevent memory leaks.
+          this.receiveBuffer = Buffer.alloc(0);
+          return;
+        }
+
+        // Found the start of the next packet, Slice off the corrupted bytes to realign the stream.
+        console.log(`[TCP DESYNC] Buffer realigned successfully. Discarded ${nextValidIndex} corrupt bytes.`);
+        this.receiveBuffer = this.receiveBuffer.subarray(nextValidIndex);
+
+        // The loop will immediately restart with the buffer perfectly aligned
+        continue;
+      }
+
+      // Now that the buffer can be assumed to be alligned, check if the full 12-byte header exists
+      if (this.receiveBuffer.length < 12) {
+        break;
+      }
+
       const id = this.receiveBuffer.readUInt32LE(4);
       const contentLength = this.receiveBuffer.readUInt32LE(8);
       const totalMessageLength = 12 + contentLength;
@@ -189,19 +222,17 @@ class RCONConnection extends EventEmitter {
         this.#handleMessageInternal(responseMessage);
 
         this.messagesInAir -= 1;
-        this.consecutiveTimeouts = 0; // Reset killswtich for dead connections
+        this.consecutiveTimeouts = 0;
 
+        // Application-level circuit breaker for clean 400 responses
         const isDesynced = responseMessage.statusCode === 400 ||
           (typeof responseMessage.contentBody === "string" &&
             (responseMessage.contentBody.includes("400") || responseMessage.contentBody.toLowerCase().includes("malformed")));
 
         if (isDesynced) {
-          console.error("[XOR DESYNC] Received 400 Malformed response. Destroying socket to force recovery...");
-
-          // Instantly sever the connection
+          // This usually means our transmit stream got messed up.
+          console.error("[TX DESYNC] Received 400 Malformed response. Destroying socket to force recovery...");
           this.socket.destroy();
-
-          // Reject the current promise so the application knows it failed
           cachedRequest.reject(new Error(responseMessage.contentBody || "RCON Error (400): Malformed request"));
         } else {
           cachedRequest.resolve(responseMessage);
